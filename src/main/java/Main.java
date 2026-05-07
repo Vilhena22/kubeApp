@@ -1,4 +1,5 @@
 import api.KubernetesClient;
+import io.kubernetes.client.openapi.models.V1Node;
 import io.kubernetes.client.openapi.models.V1Pod;
 
 import javax.swing.*;
@@ -12,13 +13,21 @@ public class Main {
                     AppSetup.getK3sHost(),
                     AppSetup.getK3sToken()
             );
-            System.out.println(client.getApiClient());
-            System.out.println( client.getCoreApi());
+
             List<V1Pod> pods = client.getPodService().listPods("default");
 
             pods.forEach(pod ->
                     System.out.println("Pod: " + Objects.requireNonNull(pod.getMetadata()).getName())
             );
+
+            System.out.println(client.getNodeService().getNode("tl2node1"));
+
+
+            /*List<V1Node> nodes = client.getNodeService().listNodes();
+
+            nodes.forEach(node ->
+                    System.out.println("Node: " + Objects.requireNonNull(node.getMetadata()).getName())
+            );*/
 
         } catch (Exception e) {
             System.out.println("Error Connecting: " + e.getMessage());

@@ -42,6 +42,11 @@ public class KubernetesClient {
     }
 
 
+    public NodeService getNodeService() {
+        if  (nodeService == null) nodeService = new NodeService(getCoreApi());
+        return nodeService;
+    }
+
     public PodService getPodService() {
         if (podService == null) podService = new PodService(getCoreApi());
         return podService;
