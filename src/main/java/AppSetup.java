@@ -18,4 +18,5 @@ public class AppSetup {
     public static String getK3sHost() { return props.getProperty("k3s.host"); }
     public static String getK3sToken() { return props.getProperty("k3s.token"); }
     public static String getPrometheusUrl() { return props.getProperty("prometheus.url"); }
+    public static String getK3sAttachToken() { return props.getProperty("k3s.attachToken"); }
 }
