@@ -1,7 +1,7 @@
+import Handlers.AppSetup;
 import api.KubernetesClient;
 import model.Result;
 
-import javax.swing.*;
 import java.util.List;
 
 public class Main {
@@ -9,20 +9,16 @@ public class Main {
         try {
             KubernetesClient client = new KubernetesClient(
                     AppSetup.getK3sHost(),
-                    AppSetup.getK3sToken(),
-                    AppSetup.getPrometheusUrl()
+                    AppSetup.getK3sToken()
             );
 
 
-            //client.getNodeService().deleteNode("tl2node3");
-
-             List<Result> results= client.getPodService().getCPUAvgByNode();
+             List<Result> results= client.getNodeService().getReadyNodes();
              for (Result result : results) {
-                 System.out.println("Pod: " + result.getMetric().getPod());
-                 System.out.println("CPU: " + result.getValue().getLast());
+                 System.out.println("Node: " + result.getMetric().getNode());
+                 System.out.println("Status: " + result.getValue().getLast());
              }
 
-            System.out.println("Total Ram: " + client.getClusterService().getTotalRam());
 
         } catch (Exception e) {
             System.out.println("Error Connecting: " + e.getMessage());

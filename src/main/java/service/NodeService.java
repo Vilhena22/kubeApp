@@ -1,9 +1,13 @@
 package service;
 
+import Handlers.HttpSendRequest;
 import api.KubernetesClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
+import model.PrometheusResponse;
+import model.Result;
 
 import java.util.List;
 import java.util.Objects;
@@ -124,6 +128,38 @@ public class NodeService {
         List<V1OwnerReference> owners = Objects.requireNonNull(pod.getMetadata()).getOwnerReferences();
         if (owners == null) return false;
         return owners.stream().anyMatch(o -> "DaemonSet".equals(o.getKind()));
+    }
+
+    public List<Result> getReadyNodes() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
+    }
+
+    public List<Result> getFreeStorage() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
+    }
+
+    public List<Result> getCpuPercentageByNode() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
+    }
+
+    public List<Result> getRamUsageByNode() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
     }
 
 }
