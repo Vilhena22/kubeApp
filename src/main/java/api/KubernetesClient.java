@@ -1,10 +1,12 @@
 package api;
 
+
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
+
 import service.*;
 
 public class KubernetesClient {
@@ -18,10 +20,11 @@ public class KubernetesClient {
     private NamespaceService namespaceService;
     private NodeService nodeService;
     private ServiceManager serviceManager;
+    private ClusterService clusterService;
+
 
     public KubernetesClient(String host, String token) {
         this.apiClient = Config.fromToken(host, token, false);
-
         //this.apiClient.setLenientOnJson(true); //Se aparecer campos novos ativar isto que faz o ignore
         Configuration.setDefaultApiClient(apiClient);
         this.coreV1Api = new CoreV1Api();
@@ -41,9 +44,13 @@ public class KubernetesClient {
         return apiClient;
     }
 
+    public KubernetesClient getKubernetesClient() {
+        return this;
+    }
+
 
     public NodeService getNodeService() {
-        if  (nodeService == null) nodeService = new NodeService(getCoreApi());
+        if  (nodeService == null) nodeService = new NodeService(getCoreApi(),getKubernetesClient());
         return nodeService;
     }
 
@@ -61,5 +68,11 @@ public class KubernetesClient {
         if (namespaceService == null) namespaceService = new NamespaceService();
         return namespaceService;
     }
+
+    public ClusterService getClusterService() {
+        if (clusterService == null) clusterService = new ClusterService();
+        return clusterService;
+    }
+
 
 }
