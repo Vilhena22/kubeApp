@@ -2,6 +2,10 @@ package ui;
 
 import Handlers.AppSetup;
 import api.KubernetesClient;
+import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1Namespace;
+import io.kubernetes.client.openapi.models.V1NamespaceList;
 import model.Result;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -58,6 +62,10 @@ public class Dashboard  {
     private JList listCard5;
     private JLabel iconCard5;
     private JLabel titleCard5;
+    private JButton createDeploymentButton;
+    private JButton deleteDeploymentButton;
+    private JComboBox comboBoxDeployment;
+    private JTable table1;
     private JTable valueTableCard3;
     private KubernetesClient client;
 
@@ -79,10 +87,11 @@ public class Dashboard  {
         }
 
 
-        getCPUPercentage();
+        /*getCPUPercentage();
         getRAMPercentage();
         getNodesStatus();
-        buildGraphic();
+        buildGraphic();*/
+
 
 
         dashboardButton.addActionListener(new ActionListener() {
@@ -142,6 +151,12 @@ public class Dashboard  {
                 hideContentPanels();
                 deploymentsPanel.setVisible(true);
 
+                try {
+                    fillDeploymentTable();
+                } catch (ApiException ex) {
+                    throw new RuntimeException(ex);
+                }
+
             }
         });
 
@@ -187,7 +202,25 @@ public class Dashboard  {
         });
     }
 
+    private void fillDeploymentTable() throws ApiException {
 
+        for (V1Namespace namespace : client.getNamespaceService().getAllNamespaces().getItems()){
+            comboBoxDeployment.addItem(namespace.getMetadata().getName());
+        }
+        String[] columNames = {"Name", "Namespace", "Resource Version"};
+        try {
+            for (V1Deployment dep : client.getDeploymentService().getAllDeployments().getItems()) {
+                Object[] row = {
+                        dep.getMetadata().getName(),
+                        dep.getMetadata().getNamespace(),
+                        dep.getMetadata().getResourceVersion()
+                };
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
 
 
     public JPanel getPanel() {
