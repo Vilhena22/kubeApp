@@ -3,15 +3,18 @@ import api.KubernetesClient;
 import com.formdev.flatlaf.FlatDarkLaf;
 import model.Result;
 import ui.Dashboard;
+import io.kubernetes.client.openapi.models.*;
+import service.DeploymentService;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 
 public class Main {
     public static void main(String[] args) {
         try {
 
-
+//
             FlatDarkLaf.setup();
             JFrame frame = new JFrame("Dashboard");
             Dashboard dashboard = new Dashboard();
@@ -20,7 +23,6 @@ public class Main {
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
-
 
 
         } catch (Exception e) {
