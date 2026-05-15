@@ -480,7 +480,7 @@
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="d3f8" binding="deploymentsPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="d3f8" binding="deploymentsPanel" layout-manager="GridLayoutManager" row-count="3" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <card name="Card4"/>
@@ -489,7 +489,43 @@
               <background color="-15525073"/>
             </properties>
             <border type="none"/>
-            <children/>
+            <children>
+              <component id="fa50" class="javax.swing.JButton" binding="createDeploymentButton" default-binding="true">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Create Deployment"/>
+                </properties>
+              </component>
+              <component id="af841" class="javax.swing.JButton" binding="deleteDeploymentButton" default-binding="true">
+                <constraints>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Delete Deployment"/>
+                </properties>
+              </component>
+              <component id="fd5f7" class="javax.swing.JTable" binding="table1" default-binding="true">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="5" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="50"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <hspacer id="f02c8">
+                <constraints>
+                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+              </hspacer>
+              <component id="a2f20" class="javax.swing.JComboBox" binding="comboBoxDeployment">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+            </children>
           </grid>
           <grid id="a3d57" binding="namespacesPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
