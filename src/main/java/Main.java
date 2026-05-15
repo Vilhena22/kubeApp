@@ -1,15 +1,10 @@
-import Handlers.AppSetup;
-import api.KubernetesClient;
+
 import com.formdev.flatlaf.FlatDarkLaf;
-import model.Result;
 import ui.Dashboard;
 import io.kubernetes.client.openapi.models.*;
-import service.DeploymentService;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
-import java.util.Objects;
 
 public class Main {
     public static void main(String[] args) {
@@ -25,6 +20,13 @@ public class Main {
             frame.setLocationRelativeTo(null);
             frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
             frame.setVisible(true);
+
+            /*KubernetesClient client = new KubernetesClient(
+                    AppSetup.getK3sHost(),
+                    AppSetup.getK3sToken()
+            );
+
+            client.getNamespaceService().getAllNamespaces().getItems().forEach(System.out::println);*/
 
 
 

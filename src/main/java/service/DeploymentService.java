@@ -6,7 +6,7 @@ import io.kubernetes.client.openapi.models.*;
 
 public class DeploymentService {
 
-    private AppsV1Api dep = new AppsV1Api();
+    private final AppsV1Api dep = new AppsV1Api();
 
     // Listar todos os deployments
     public V1DeploymentList getAllDeployments() throws ApiException {
@@ -16,6 +16,11 @@ public class DeploymentService {
     // Listar deployments de um namespace específico
     public V1DeploymentList getDeploymentsByNamespace(String namespace) throws ApiException {
         return dep.listNamespacedDeployment(namespace).execute();
+    }
+
+    //Devolve o deployment
+    public V1Deployment getDeploymentsByName(String namespace,String deploymentName) throws ApiException {
+        return dep.readNamespacedDeployment(deploymentName,namespace).execute();
     }
 
     // Criar deployment

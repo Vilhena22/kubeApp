@@ -17,10 +17,9 @@ public class PodService {
         this.api = api;
     }
 
-    public List<V1Pod> listPods(String namespace) throws Exception {
+    public V1PodList getAllPods(String namespace) throws Exception {
         return api.listNamespacedPod(namespace)
-                .execute()
-                .getItems();
+                .execute();
     }
 
 

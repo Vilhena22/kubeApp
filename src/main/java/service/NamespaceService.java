@@ -8,7 +8,7 @@ import io.kubernetes.client.openapi.models.V1Status;
 
 public class NamespaceService extends V1Namespace {
 
-    private CoreV1Api nm = new CoreV1Api();
+    private final CoreV1Api nm = new CoreV1Api();
 
     public V1Namespace getNamespace(String namespace) throws ApiException {
         return nm.readNamespace(namespace).execute();
