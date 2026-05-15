@@ -131,7 +131,9 @@ public class NodeService {
     }
 
     public List<Result> getReadyNodes() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
+        String json = HttpSendRequest.sendRequestGet("kube_node_info\n" +
+                "* on(node) group_left()\n" +
+                "kube_node_status_condition{condition=\"Ready\", status=\"true\"}");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         return response.data.getResult();

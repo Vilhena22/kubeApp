@@ -17,14 +17,31 @@ public class ClusterService {
 
     }
 
-    public double getTotalRam() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("sum(machine_memory_bytes)");
+    public String getTotalRam() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("kube_node_status_capacity{resource='memory', node='tl2master'}");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         String value = (String) response.data.getResult().getFirst().getValue().getLast();
         double bytes = Double.parseDouble(value);
-        return (bytes / Math.pow(1024,3));
+        double gb = bytes / Math.pow(1024, 3);
 
+        if (gb >= 1024) {
+            return String.format("%.2f TB", gb / 1024);
+        } else if (gb >= 1) {
+            return String.format("%.2f GB", gb);
+        } else {
+            double mb = bytes / Math.pow(1024, 2);
+            return String.format("%.2f MB", mb);
+        }
+
+    }
+
+    public int getTotalCpuCores() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("kube_node_status_capacity{resource='cpu', node='tl2master'}");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        String value = (String) response.data.getResult().getFirst().getValue().getLast();
+        return Integer.parseInt(value);
     }
 
     public List<Result> getRamPercentage() throws Exception {
@@ -33,6 +50,13 @@ public class ClusterService {
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         return response.data.getResult();
 
+    }
+
+    public List<Result> getClusterSpecs() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("kube_node_info{node='tl2master'}");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
     }
 
 }

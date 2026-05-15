@@ -12,10 +12,18 @@ public class Metric {
     public String namespace;
     public String container;
     public String node;
+    public String internal_ip;
 
     // para saber o tipo de métrica (cpu, memory, network)
     @JsonProperty("__name__")
     public String metricName;
+    @JsonProperty("kernel_version")
+    public String kernelVersion;
+    @JsonProperty("kubelet_version")
+    public String kubeletVersion;
+    @JsonProperty("os_image")
+    public String osImage;
+
 
     public String getPod() {
         return pod;
@@ -39,5 +47,23 @@ public class Metric {
 
     public String getNode() {
         return node;
+    }
+
+    public String getInternal_ip() {return internal_ip;}
+
+    public String getInstance() {
+        return instance;
+    }
+
+    public String getKernelVersion() {
+        return kernelVersion;
+    }
+
+    public String getKubeletVersion() {
+        return kubeletVersion;
+    }
+
+    public String getOsImage() {
+        return osImage;
     }
 }
