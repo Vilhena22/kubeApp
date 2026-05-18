@@ -5,6 +5,7 @@ import api.KubernetesClient;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.*;
+import model.IconType;
 import model.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jfree.chart.ChartFactory;
@@ -18,11 +19,9 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.Map;
 import java.util.Objects;
 
@@ -51,17 +50,12 @@ public class Dashboard  {
     private JLabel valueCard2;
     private JLabel titleTable;
     private JPanel graphicPanel;
-    private JPanel Card1;
-    private JPanel Card2;
-    private JPanel Card3;
     private JLabel iconCard3;
-    private JPanel Card4;
     private JLabel iconCard4;
     private JList listPodCpuRank;
     private JList listPodRamRank;
     private JTable tableNodeStat;
     private JLabel iconCard5;
-    private JPanel Card5;
     private JLabel cpuLabelCard5;
     private JLabel ramLabelCard5;
     private JLabel ipLabelCard5;
@@ -71,11 +65,14 @@ public class Dashboard  {
     private JButton createDeploymentButton;
     private JButton deleteDeploymentButton;
     private JComboBox comboBoxDeployment;
-    private JTable table1;
+    private JTable tableDeployments;
     private JTable tableNodes;
     private JPanel searchPanel;
     private JTable tableSearch;
-    private JTable valueTableCard3;
+    private JTable tablePods;
+    private JComboBox comboBoxFilterPodByNamespace;
+    private JButton addPodButton;
+    private JButton deletePodButton;
     private KubernetesClient client;
 
     public Dashboard() throws Exception {
@@ -97,7 +94,7 @@ public class Dashboard  {
         getPodRamRank();
         getClusterSpecs();
         buildGraphic();
-        buttonEffect(dashboardButton);
+        navbarButtonEffect(dashboardButton);
 
 
         dashboardButton.addActionListener(e -> {
@@ -106,7 +103,7 @@ public class Dashboard  {
                     resetButton((JButton) c);
                 }
             }
-            buttonEffect(dashboardButton);
+            navbarButtonEffect(dashboardButton);
             hideContentPanels();
             metricsPanel.setVisible(true);
 
@@ -118,7 +115,7 @@ public class Dashboard  {
                     resetButton((JButton) c);
                 }
             }
-            buttonEffect(nodesButton);
+            navbarButtonEffect(nodesButton);
             hideContentPanels();
             try {
                 fillNodesTable();
@@ -135,8 +132,19 @@ public class Dashboard  {
                     resetButton((JButton) c);
                 }
             }
-            buttonEffect(podsButton);
+            navbarButtonEffect(podsButton);
             hideContentPanels();
+            try {
+                fillFilterCombobox(comboBoxFilterPodByNamespace);
+                Object selectedItem = comboBoxFilterPodByNamespace.getSelectedItem();
+                if(selectedItem == null){
+                    fillPodsTable("");
+                }else{
+                    fillPodsTable(selectedItem.toString());
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
             podsPanel.setVisible(true);
 
         });
@@ -147,7 +155,7 @@ public class Dashboard  {
                     resetButton((JButton) c);
                 }
             }
-            buttonEffect(deploymentsButton);
+            navbarButtonEffect(deploymentsButton);
             hideContentPanels();
             deploymentsPanel.setVisible(true);
             try {
@@ -163,7 +171,7 @@ public class Dashboard  {
                     resetButton((JButton) c);
                 }
             }
-            buttonEffect(servicesButton);
+            navbarButtonEffect(servicesButton);
             hideContentPanels();
             servicesPanel.setVisible(true);
 
@@ -175,7 +183,7 @@ public class Dashboard  {
                     resetButton((JButton) c);
                 }
             }
-            buttonEffect(namespacesButton);
+            navbarButtonEffect(namespacesButton);
             hideContentPanels();
             namespacesPanel.setVisible(true);
 
@@ -205,11 +213,34 @@ public class Dashboard  {
             }
         });
 
+        addPodButton.addActionListener(this::createPod);
+        deletePodButton.addActionListener(actionEvent -> {
+            try {
+                deletePod();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
+
+        comboBoxFilterPodByNamespace.addItemListener(e -> {
+            try {
+                Object selectedItem = comboBoxFilterPodByNamespace.getSelectedItem();
+                if(selectedItem == null){
+                    fillPodsTable("");
+                }else{
+                    fillPodsTable(selectedItem.toString());
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
     }
 
 
     ///################Nodes#################
+    ///
+
     private void fillNodesTable() throws Exception {
         String[] columNames = new String[]{"Name", "Status", "Ip", "Pods Running", "Max Pods"};
         DefaultTableModel model = new DefaultTableModel(columNames, 0) {
@@ -253,15 +284,74 @@ public class Dashboard  {
 
     }
 
+    ////################Pods#################
+    ///
+
+    private void createPod(ActionEvent actionEvent) {
+        new CreatePod(client);
+        try {
+            fillPodsTable("");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void deletePod() throws Exception {
+        for ( int i :  tablePods.getSelectedRows()) {
+            String podName = tablePods.getValueAt(i, 0).toString();
+            String nameSpace = tablePods.getValueAt(i, 3).toString();
+            client.getPodService().deletePod(podName,nameSpace);
+        }
+        new InfoDialog("All Pods Deleted!",IconType.SUCCESS);
+        fillPodsTable("");
+    }
+
+
+    private void fillPodsTable(String namespace) throws Exception {
+        String[] columNames = new String[]{"Name", "Status", "Node", "Namespace", "Pod IP", "Creation Date"};
+        DefaultTableModel model = new DefaultTableModel(columNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        V1PodList podList =client.getPodService().getAllPods();
+        if (!namespace.isEmpty()) {
+            podList.getItems().clear();
+            podList = client.getPodService().getAllPodsOnNamespace(namespace);
+        }
+        for (V1Pod pod : podList.getItems()) {
+            Object[] row = getObjects(pod);
+            model.addRow(row);
+        }
+        tablePods.setModel(model);
+        formatTables(tablePods);
+
+    }
+
+    @NotNull
+    private static Object[] getObjects(V1Pod pod) {
+        String podName = Objects.requireNonNull(pod.getMetadata()).getName();
+        String status = Objects.requireNonNull(pod.getStatus()).getPhase();
+        String nameSpace = pod.getMetadata().getNamespace();
+        String node = Objects.requireNonNull(pod.getSpec()).getNodeName();
+        String ip = pod.getStatus().getPodIP();
+        String date = Objects.requireNonNull(pod.getMetadata().getCreationTimestamp()).toString();
+        return new Object[]{
+                podName,
+                status,
+                node,
+                nameSpace,
+                ip,
+                date
+        };
+    }
+
     ////################Deployments#################
     ///
     private void fillDeploymentTable() throws ApiException {
 
-        for (V1Namespace namespace : client.getNamespaceService().getAllNamespaces().getItems()){
-            if (namespace.getMetadata() != null) {
-                comboBoxDeployment.addItem(namespace.getMetadata().getName());
-            }
-        }
+        fillFilterCombobox(comboBoxDeployment);
         String[] columNames = {"Name", "Namespace", "Resource Version"};
         try {
             for (V1Deployment dep : client.getDeploymentService().getAllDeployments().getItems()) {
@@ -281,7 +371,6 @@ public class Dashboard  {
     public JPanel getPanel() {
         return mainPanel;
     }
-
 
 
     private KubernetesClient connectClient(){
@@ -357,7 +446,7 @@ public class Dashboard  {
                 String nameSpaceSearch = name.getMetadata().getName();
                 if (nameSpaceSearch != null) {
                     try {
-                        V1PodList podList = client.getPodService().getAllPods(nameSpaceSearch);
+                        V1PodList podList = client.getPodService().getAllPodsOnNamespace(nameSpaceSearch);
                         if (podList != null) {
                             podList.getItems().stream()
                                     .filter(pod -> pod.getMetadata() != null
@@ -409,11 +498,8 @@ public class Dashboard  {
             searchPanel.setVisible(true);
 
         }else {
-            InfoDialog dialog = new InfoDialog("No Results Found");
-            dialog.setLocationRelativeTo(mainPanel);
-            dialog.setUndecorated(true);
-            dialog.pack();
-            dialog.setVisible(true);
+            new InfoDialog("No Results Found", IconType.NOTFOUND);
+
         }
         searchBar.setText("");
 
@@ -437,7 +523,7 @@ public class Dashboard  {
         iconCard4.setText("Biggest Memory consumers");
         iconCard4.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
 
-        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/trofeuRam.png"))).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/trofeuRam.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard4.setIcon(new ImageIcon(logo));
     }
 
@@ -458,7 +544,7 @@ public class Dashboard  {
         iconCard3.setText("Biggest CPU consumers");
         iconCard3.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
 
-        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/trofeuCpu.png"))).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/trofeuCpu.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard3.setIcon(new ImageIcon(logo));
     }
 
@@ -486,7 +572,7 @@ public class Dashboard  {
         osLabelCard5.setFont(font);
 
 
-        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/nodesList.png"))).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/nodesList.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard5.setIcon(new ImageIcon(logo));
         iconCard5.setText("Cluster Information");
         iconCard5.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
@@ -503,7 +589,7 @@ public class Dashboard  {
         }
         valueCard1.setText(String.format("%02.2f%%", value ));
 
-        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/cpu.png"))).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/cpu.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard1.setIcon(new ImageIcon(logo));
         iconCard1.setText("Cluster CPU Usage");
         iconCard1.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
@@ -521,7 +607,7 @@ public class Dashboard  {
         }
         valueCard2.setText(String.format("%02.2f%%", value ));
 
-        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/ram.png"))).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/ram.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard2.setIcon(new ImageIcon(logo));
         iconCard2.setText("Cluster Memory Usage");
         iconCard2.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
@@ -557,10 +643,24 @@ public class Dashboard  {
         Font font = new Font("JetBrains Mono Medium", Font.BOLD, 16);
         formatTables(tableNodeStat);
         titleTable.setText("Nodes Status");
-        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/nodesList.png"))).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+        Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/nodesList.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         titleTable.setIcon(new ImageIcon(logo));
         titleTable.setFont(font);
 
+    }
+
+    ////################Utilities Functions#################
+    ///
+
+    private void fillFilterCombobox(JComboBox comboBox) throws ApiException {
+        comboBox.removeAllItems();
+        for (V1Namespace namespace : client.getNamespaceService().getAllNamespaces().getItems()){
+            if (namespace.getMetadata() != null) {
+                comboBox.addItem(namespace.getMetadata().getName());
+            }
+        }
+        comboBox.setSelectedIndex(-1);
+        StyleFunctions.setComboBoxStyle(comboBox);
     }
 
     private void formatTables(JTable table) {
@@ -569,6 +669,7 @@ public class Dashboard  {
         Color color1 = new Color(19,27,47);   // adjust to your liking
         Color color2 = new Color(30,41,60);   // adjust to your liking
         Color colorText = new Color(222, 222, 222);
+        Color highlight = new Color(56,124,245);
         Font font = new Font("JetBrains Mono Medium", Font.BOLD, 16);
         DefaultTableCellRenderer rowRenderer = new DefaultTableCellRenderer() {
 
@@ -600,7 +701,13 @@ public class Dashboard  {
                 JLabel label = (JLabel) super.getTableCellRendererComponent(
                         table, value, isSelected, hasFocus, row, column);
 
-                Color rowBg = (row % 2 == 0) ? color2 : color1;
+                Color rowBg;
+
+                if (isSelected) {
+                    rowBg = highlight;
+                } else {
+                    rowBg = (row % 2 == 0) ? color2 : color1;
+                }
                 label.setBackground(rowBg);
                 label.setForeground(colorText);
                 label.setOpaque(true);
@@ -632,6 +739,9 @@ public class Dashboard  {
 
         };
 
+        final int[] hoveredColumn = getInts(table);
+
+
         DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(
@@ -641,7 +751,13 @@ public class Dashboard  {
                 JLabel label = (JLabel) super.getTableCellRendererComponent(
                         table, value, isSelected, hasFocus, row, column);
 
-                label.setBackground(color1);
+                Color hoverColor = new Color(45, 60, 90);
+
+                if (column == hoveredColumn[0]) {
+                    label.setBackground(hoverColor);
+                } else {
+                    label.setBackground(color1);
+                }
                 label.setForeground(colorText);
                 label.setOpaque(true);
                 label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -672,10 +788,47 @@ public class Dashboard  {
             table.getTableHeader().getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
         }
 
+        TableRowSorter<TableModel> sorter =
+                new TableRowSorter<>(table.getModel());
 
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setRowSorter(sorter);
+        table.getTableHeader().setCursor(
+                Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        );
+
+
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        table.setSelectionBackground(highlight);
         table.setRowHeight(35);
         table.setVisible(true);
+    }
+
+    @NotNull
+    private static int[] getInts(JTable table) {
+        final int[] hoveredColumn = {-1};
+
+        JTableHeader header = table.getTableHeader();
+
+        header.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int col = header.columnAtPoint(e.getPoint());
+
+                if (hoveredColumn[0] != col) {
+                    hoveredColumn[0] = col;
+                    header.repaint();
+                }
+            }
+        });
+
+        header.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseExited(MouseEvent e) {
+                hoveredColumn[0] = -1;
+                header.repaint();
+            }
+        });
+        return hoveredColumn;
     }
 
     private void setBadgesInList(JList list) {
@@ -750,8 +903,12 @@ public class Dashboard  {
             case "deployment" -> new Color[]{new Color(80, 40, 120),  new Color(180, 80, 255), new Color(120, 50, 180)};
             case "pod"        -> new Color[]{new Color(20, 80, 60),   new Color(0, 220, 130),  new Color(0, 160, 90)};
             case "namespace"  -> new Color[]{new Color(100, 60, 0),   new Color(255, 180, 0),  new Color(180, 120, 0)};
-            case "up"         -> new Color[]{new Color(0, 80, 40),    new Color(0, 255, 100),  new Color(0, 200, 80)};
+            case "up", "running" -> new Color[]{new Color(0, 80, 40),    new Color(0, 255, 100),  new Color(0, 200, 80)};
             case "down"       -> new Color[]{new Color(80, 20, 20),   new Color(255, 80, 80),  new Color(200, 50, 50)};
+            case "pending"   -> new Color[]{new Color(90, 70, 20), new Color(255, 210, 80),new Color(180, 140, 40)};
+            case "succeeded" -> new Color[]{new Color(20, 60, 120),new Color(80, 180, 255),new Color(40, 120, 200)};
+            case "failed"    -> new Color[]{new Color(100, 20, 20),new Color(255, 60, 60),new Color(180, 30, 30)};
+            case "unknown"   -> new Color[]{new Color(70, 70, 70),new Color(180, 180, 180),new Color(120, 120, 120)};
             default           -> new Color[]{new Color(50, 50, 50),   new Color(180, 180, 180),new Color(100, 100, 100)};
         };
         // [0] = background, [1] = text, [2] = border
@@ -786,7 +943,7 @@ public class Dashboard  {
         logoLabel.setIcon(new ImageIcon(icon));
 
         //Set Background Colors
-        // --- Botões ---
+        // --- Botões NavBar ---
         AbstractButton[] buttons = {
                 dashboardButton,nodesButton,podsButton,namespacesButton, deploymentsButton,servicesButton
         };
@@ -815,6 +972,16 @@ public class Dashboard  {
         searchIcon.setRolloverIcon(new ImageIcon(icon));
 
 
+        buttons = new AbstractButton[]{
+                createDeploymentButton,deleteDeploymentButton, //Deployment Buttons
+                addPodButton,deletePodButton //Pods Buttons
+        };
+
+        for (AbstractButton btn : buttons) {
+            StyleFunctions.hoverButtonEffect(btn);
+        }
+
+        StyleFunctions.setTextFieldStyle(searchBar);
 
     }
 
@@ -839,7 +1006,7 @@ public class Dashboard  {
         searchBar.setText("");
     }
 
-    private void buttonEffect(JButton button) {
+    private void navbarButtonEffect(JButton button) {
         button.setBackground(new Color(56,124,245,20));
         button.setForeground(new Color(222, 222, 222));
         Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/"+ button.getText().toLowerCase() +"Selected.png"))).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);

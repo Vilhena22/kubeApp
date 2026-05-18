@@ -8,10 +8,10 @@
     <properties>
       <background color="-15525073"/>
       <inheritsPopupMenu value="false"/>
-      <maximumSize width="250" height="200"/>
-      <minimumSize width="250" height="200"/>
+      <maximumSize width="350" height="150"/>
+      <minimumSize width="350" height="150"/>
       <opaque value="true"/>
-      <preferredSize width="250" height="200"/>
+      <preferredSize width="350" height="150"/>
     </properties>
     <border type="none"/>
     <children>
@@ -62,7 +62,7 @@
         <children>
           <component id="76deb" class="javax.swing.JLabel" binding="messageLabel">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false">
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="0" indent="0" use-parent-layout="false">
                 <minimum-size width="-1" height="50"/>
                 <preferred-size width="-1" height="50"/>
                 <maximum-size width="-1" height="50"/>

@@ -1,7 +1,12 @@
 
+import Handlers.AppSetup;
+import api.KubernetesClient;
 import com.formdev.flatlaf.FlatDarkLaf;
+import model.IconType;
+import ui.CreatePod;
 import ui.Dashboard;
 import io.kubernetes.client.openapi.models.*;
+import ui.InfoDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,13 +26,15 @@ public class Main {
             frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
             frame.setVisible(true);
 
+            //client.getNamespaceService().getAllNamespaces().getItems().forEach(System.out::println);
+
             /*KubernetesClient client = new KubernetesClient(
                     AppSetup.getK3sHost(),
                     AppSetup.getK3sToken()
             );
 
-            client.getNamespaceService().getAllNamespaces().getItems().forEach(System.out::println);*/
-
+            new CreatePod(client);
+*/
 
 
         } catch (Exception e) {
