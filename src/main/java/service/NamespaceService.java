@@ -4,7 +4,6 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.V1NamespaceList;
-import io.kubernetes.client.openapi.models.V1Status;
 
 public class NamespaceService extends V1Namespace {
 
@@ -22,7 +21,10 @@ public class NamespaceService extends V1Namespace {
         nm.createNamespace(nome).execute();
     }
 
-    public V1Status deleteNamespace(String namespace) throws ApiException {
-        return nm.deleteNamespace(namespace).execute();
+    public void deleteNamespace(String namespace) throws ApiException {
+        if (namespace == null || namespace.isBlank()) {
+            throw new IllegalArgumentException("Namespace must not be null or empty");
+        }
+        nm.deleteNamespace(namespace).execute();
     }
 }

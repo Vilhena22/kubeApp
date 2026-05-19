@@ -5,7 +5,7 @@ import api.KubernetesClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Namespace;
-import io.kubernetes.client.openapi.models.V1NamespaceList;
+import io.kubernetes.client.openapi.models.V1Status;
 import model.Result;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -17,6 +17,8 @@ import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -65,7 +67,10 @@ public class Dashboard  {
     private JButton createDeploymentButton;
     private JButton deleteDeploymentButton;
     private JComboBox comboBoxDeployment;
-    private JTable table1;
+    private JTable deploymentTable;
+    private JButton createNamespaceButton;
+    private JButton deleteNamespaceButton;
+    private JTable namespaceTable;
     private JTable valueTableCard3;
     private KubernetesClient client;
 
@@ -92,6 +97,7 @@ public class Dashboard  {
         getNodesStatus();
         buildGraphic();*/
 
+        deploymentsButton.addActionListener(this::btnDeleteDeployment);
 
 
         dashboardButton.addActionListener(new ActionListener() {
@@ -187,6 +193,8 @@ public class Dashboard  {
                 hideContentPanels();
                 namespacesPanel.setVisible(true);
 
+                fillNamespaceTable();
+
             }
         });
 
@@ -202,12 +210,34 @@ public class Dashboard  {
         });
     }
 
+    private void btnDeleteDeployment(ActionEvent actionEvent) {
+
+        String name = "";
+        String namespace = "";
+
+        for (int row : deploymentTable.getSelectedRows()) {
+            try {
+                name = deploymentTable.getValueAt(row,0).toString();
+                namespace = deploymentTable.getValueAt(row, 1 ).toString();
+                client.getDeploymentService().deleteDeployment(name, namespace);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     private void fillDeploymentTable() throws ApiException {
 
-        for (V1Namespace namespace : client.getNamespaceService().getAllNamespaces().getItems()){
+        comboBoxDeployment.addItem(""); // opção vazia por default
+
+        for (V1Namespace namespace : client.getNamespaceService().getAllNamespaces().getItems()) {
             comboBoxDeployment.addItem(namespace.getMetadata().getName());
         }
-        String[] columNames = {"Name", "Namespace", "Resource Version"};
+
+
+        String[] columnNames = {"Name", "Namespace", "Resource Version"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
         try {
             for (V1Deployment dep : client.getDeploymentService().getAllDeployments().getItems()) {
                 Object[] row = {
@@ -215,13 +245,51 @@ public class Dashboard  {
                         dep.getMetadata().getNamespace(),
                         dep.getMetadata().getResourceVersion()
                 };
+                model.addRow(row);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
+        deploymentTable.setModel(model);
+
+        //centrar o texto das colunas 1 e 2
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+
+        for (int i = 1; i < deploymentTable.getColumnCount(); i++) {
+            deploymentTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
     }
 
+    public void fillNamespaceTable(){
+
+        String[] columnNames = {"Name", "Creation Timestamp", "State"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+        try {
+            for (V1Namespace nm : client.getNamespaceService().getAllNamespaces().getItems()) {
+                Object[] row = {
+                        nm.getMetadata().getName(),
+                        nm.getMetadata().getCreationTimestamp(),
+                        nm.getStatus().getPhase()
+                };
+                model.addRow(row);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        namespaceTable.setModel(model);
+
+        //centrar o texto das colunas 1 e 2
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+
+        for (int i = 1; i < namespaceTable.getColumnCount(); i++) {
+            namespaceTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+    }
 
     public JPanel getPanel() {
         return mainPanel;
@@ -231,14 +299,12 @@ public class Dashboard  {
 
     }
 
-
     private KubernetesClient connectClient(){
             return new KubernetesClient(
                     AppSetup.getK3sHost(),
                     AppSetup.getK3sToken()
             );
     }
-
 
     private void getCPUPercentage() throws Exception {
         Result result = client.getClusterService().getCPUPercentage().getLast();
