@@ -4,6 +4,9 @@ import Handlers.AppSetup;
 import api.KubernetesClient;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1Namespace;
+import io.kubernetes.client.openapi.models.V1Status;
 import io.kubernetes.client.openapi.models.*;
 import model.IconType;
 import model.Result;
@@ -18,6 +21,8 @@ import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
@@ -65,6 +70,10 @@ public class Dashboard  {
     private JButton createDeploymentButton;
     private JButton deleteDeploymentButton;
     private JComboBox comboBoxDeployment;
+    private JButton createNamespaceButton;
+    private JButton deleteNamespaceButton;
+    private JTable namespaceTable;
+    private JTable valueTableCard3;
     private JTable tableDeployments;
     private JTable tableNodes;
     private JPanel searchPanel;
@@ -108,6 +117,7 @@ public class Dashboard  {
         buildGraphic();
         navbarButtonEffect(dashboardButton);
 
+        deploymentsButton.addActionListener(this::btnDeleteDeployment);
 
         dashboardButton.addActionListener(e -> {
             for (Component c : navbarPanel.getComponents()){
@@ -199,6 +209,7 @@ public class Dashboard  {
             hideContentPanels();
             namespacesPanel.setVisible(true);
 
+                fillNamespaceTable();
         });
 
         searchBar.addKeyListener(new KeyAdapter() {
@@ -247,7 +258,22 @@ public class Dashboard  {
                 throw new RuntimeException(ex);
             }
         });
+    }
 
+    private void btnDeleteDeployment(ActionEvent actionEvent) {
+
+        String name = "";
+        String namespace = "";
+
+        for (int row : tableDeployments.getSelectedRows()) {
+            try {
+                name = tableDeployments.getValueAt(row,0).toString();
+                namespace = tableDeployments.getValueAt(row, 1 ).toString();
+                client.getDeploymentService().deleteDeployment(name, namespace);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
 
@@ -471,6 +497,34 @@ public class Dashboard  {
 
     }
 
+    public void fillNamespaceTable(){
+
+        String[] columnNames = {"Name", "Creation Timestamp", "State"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+
+        try {
+            for (V1Namespace nm : client.getNamespaceService().getAllNamespaces().getItems()) {
+                Object[] row = {
+                        nm.getMetadata().getName(),
+                        nm.getMetadata().getCreationTimestamp(),
+                        nm.getStatus().getPhase()
+                };
+                model.addRow(row);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        namespaceTable.setModel(model);
+
+        //centrar o texto das colunas 1 e 2
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+
+        for (int i = 1; i < namespaceTable.getColumnCount(); i++) {
+            namespaceTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+    }
 
     public JPanel getPanel() {
         return mainPanel;
@@ -1094,8 +1148,6 @@ public class Dashboard  {
         }
 
         StyleFunctions.setTextFieldStyle(searchBar);
-
-
 
     }
 

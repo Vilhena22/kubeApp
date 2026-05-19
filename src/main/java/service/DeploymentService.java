@@ -64,7 +64,7 @@ public class DeploymentService {
     }
 
     // Eliminar deployment
-    public V1Status deleteDeployment(String name, String namespace) throws ApiException {
-        return dep.deleteNamespacedDeployment(name,namespace).execute();
+    public void deleteDeployment(String name, String namespace) throws ApiException {
+        dep.deleteNamespacedDeployment(name, namespace).execute();
     }
 }

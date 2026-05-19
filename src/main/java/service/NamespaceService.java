@@ -26,6 +26,9 @@ public class NamespaceService extends V1Namespace {
     }
 
     public void deleteNamespace(String namespace) throws ApiException {
+        if (namespace == null || namespace.isBlank()) {
+            throw new IllegalArgumentException("Namespace must not be null or empty");
+        }
         nm.deleteNamespace(namespace).execute();
     }
 }
