@@ -2,9 +2,12 @@ package service;
 
 import Handlers.HttpSendRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
 
+import io.kubernetes.client.util.Yaml;
 import model.PrometheusResponse;
 import model.Result;
 
@@ -17,10 +20,13 @@ public class PodService {
         this.api = api;
     }
 
-    public List<V1Pod> listPods(String namespace) throws Exception {
+    public V1PodList getAllPodsOnNamespace(String namespace) throws Exception {
         return api.listNamespacedPod(namespace)
-                .execute()
-                .getItems();
+                .execute();
+    }
+
+    public V1PodList getAllPods() throws Exception {
+        return api.listPodForAllNamespaces().execute();
     }
 
 
@@ -38,46 +44,33 @@ public class PodService {
                 .execute();
     }
 
-    public V1Pod createPod(String name, String namespace, String image, String containerName) throws Exception {
+    public void createPod(String name, String nameSpace, String description, String image, String containerName, String restartPolicy, String pullPolicy) throws ApiException {
         V1Pod pod = new V1Pod()
                 .metadata(new V1ObjectMeta()
                         .name(name)
-                        .namespace(namespace))
+                        .namespace(nameSpace)
+                        .putLabelsItem("app", name)
+                        .putAnnotationsItem(
+                                "description",
+                                description
+                        )
+                )
                 .spec(new V1PodSpec()
+                        .restartPolicy(restartPolicy)
                         .runtimeClassName("crun")
                         .overhead(null)
                         .containers(List.of(
+
                                 new V1Container()
                                         .name(containerName)
                                         .image(image)
-                        )));
+                                        .imagePullPolicy(pullPolicy)
+                        )).securityContext(new V1PodSecurityContext()
+                                .runAsNonRoot(true)
+                                .runAsUser(1000L))
+                );
 
-        return api.createNamespacedPod(namespace, pod).execute();
-    }
-
-
-    public List<Result> getCPUAvgByNode() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("sum(rate(container_cpu_usage_seconds_total[5m])) by (pod)");
-        ObjectMapper mapper = new ObjectMapper();
-        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
-        return response.data.getResult();
-
-    }
-
-    public List<Result> getRamByNode() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("sum(container_memory_usage_bytes) by (pod)");
-        ObjectMapper mapper = new ObjectMapper();
-        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
-        return response.data.getResult();
-
-    }
-
-    public List<Result> getNetworkByNode() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("sum(rate(container_network_receive_bytes_total[5m])) by (pod)");
-        ObjectMapper mapper = new ObjectMapper();
-        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
-        return response.data.getResult();
-
+        api.createNamespacedPod(nameSpace, pod).execute();
     }
 
     public List<Result> getTopFivePodsByCpuUsage() throws Exception {

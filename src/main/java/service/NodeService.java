@@ -27,10 +27,9 @@ public class NodeService {
         this.api = api;this.client = client;
     }
 
-    public List<V1Node> listNodes() throws Exception {
+    public V1NodeList getAllNodes() throws Exception {
         return api.listNode()
-                .execute()
-                .getItems();
+                .execute();
     }
 
     public V1Node getNode(String name) throws Exception {
@@ -131,7 +130,10 @@ public class NodeService {
     }
 
     public List<Result> getReadyNodes() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
+        String json = HttpSendRequest.sendRequestGet("""
+                kube_node_info
+                * on(node) group_left()
+                kube_node_status_condition{condition="Ready", status="true"}""");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         return response.data.getResult();
@@ -156,6 +158,30 @@ public class NodeService {
 
     public List<Result> getRamUsageByNode() throws Exception {
         String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
+    }
+
+    public List<Result> getCPUAvgByNode() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("sum(rate(container_cpu_usage_seconds_total[5m])) by (pod)");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
+    }
+
+    public List<Result> getRamByNode() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("sum(container_memory_usage_bytes) by (pod)");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
+    }
+
+    public List<Result> getNetworkByNode() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("sum(rate(container_network_receive_bytes_total[5m])) by (pod)");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         return response.data.getResult();
