@@ -385,12 +385,10 @@ public class Dashboard  {
             comboBoxDeployment.addItem(namespace.getMetadata().getName());
         }
 
-
         String[] columnNames = {"Name", "Namespace", "Resource Version"};
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
 
         fillFilterCombobox(comboBoxDeployment);
-        String[] columNames = {"Name", "Namespace", "Resource Version"};
         try {
             for (V1Deployment dep : client.getDeploymentService().getAllDeployments().getItems()) {
                 Object[] row = {
