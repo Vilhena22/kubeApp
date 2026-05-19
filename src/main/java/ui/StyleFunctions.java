@@ -16,7 +16,9 @@ public class StyleFunctions {
     private static final Color bg = new Color(30, 41, 60);
     private static final Color text = new Color(222,222,222);
     private static final Color border = new Color(30, 41, 60);
+    private static final Color iconButtonBG = new Color(19,27,47);
     private static final Font font = new Font("JetBrains Mono Medium", Font.BOLD, 16);
+
 
     public static void hoverButtonEffect(AbstractButton btn){
         btn.setBackground(bg);
@@ -38,6 +40,28 @@ public class StyleFunctions {
                 btn.setBackground(bg);
             }
         });
+    }
+
+    public static void setIconsButton(AbstractButton btn){
+        btn.setBackground(iconButtonBG);
+        btn.setForeground(text);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(true);
+        btn.setOpaque(false);
+        btn.setFont(font);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBorder(BorderFactory.createLineBorder(iconButtonBG));
+        /*btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                btn.setBackground(hover);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btn.setBackground(iconButtonBG);
+            }
+        });*/
     }
 
     public  static void setTextFieldStyle(JTextField searchBar){

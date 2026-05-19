@@ -14,8 +14,6 @@ import java.awt.*;
 public class Main {
     public static void main(String[] args) {
         try {
-
-//
             FlatDarkLaf.setup();
             JFrame frame = new JFrame("Dashboard");
             Dashboard dashboard = new Dashboard();
@@ -33,9 +31,10 @@ public class Main {
                     AppSetup.getK3sToken()
             );
 
-            new CreatePod(client);
-*/
+            new CreatePod(client);*/
 
+
+            //new InfoDialog("teste",IconType.INFO);
 
         } catch (Exception e) {
             System.out.println("Error Connecting: " + e.getMessage());

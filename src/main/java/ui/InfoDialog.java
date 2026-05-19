@@ -10,15 +10,16 @@ import java.util.Objects;
 public class InfoDialog extends JDialog {
     private JPanel contentPane;
     private JButton buttonOK;
-    private JLabel messageLabel;
+    private JLabel iconLabel;
+    private JTextArea textAreaMessage;
 
     public InfoDialog(String message, IconType type) {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
         setUndecorated(true);
-        setLocationRelativeTo(null);
         pack();
+        setLocationRelativeTo(null);
 
         buttonOK.addActionListener(e -> onOK());
 
@@ -29,8 +30,8 @@ public class InfoDialog extends JDialog {
         contentPane.registerKeyboardAction(e -> onOK(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
 
-        messageLabel.setText(message);
-        messageLabel.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
+        iconLabel.setText(message);
+        iconLabel.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
         Image logo = switch (type) {
             case ERROR ->
                     new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/error.png"))).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
@@ -43,7 +44,7 @@ public class InfoDialog extends JDialog {
             default ->
                     new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/exclamation.png"))).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
         };
-        messageLabel.setIcon(new ImageIcon(logo));
+        iconLabel.setIcon(new ImageIcon(logo));
         setVisible(true);
     }
 

@@ -14,6 +14,7 @@ target/
 *.iws
 *.iml
 *.ipr
+log.txt
 
 # Gradle
 .gradle/
@@ -39,7 +40,6 @@ build/
 
 ### VS Code ###
 .vscode/
-
 # Logs
 *.log
 

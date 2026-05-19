@@ -468,31 +468,59 @@
             </properties>
             <border type="none"/>
             <children>
-              <scrollpane id="56726">
+              <grid id="60c5b" binding="nodesLoading" layout-manager="CardLayout" hgap="0" vgap="0">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="1" use-parent-layout="false"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <background color="-14800580"/>
                 </properties>
-                <border type="empty">
-                  <size top="20" left="10" bottom="20" right="10"/>
-                </border>
+                <border type="none"/>
                 <children>
-                  <component id="784a6" class="javax.swing.JTable" binding="tableNodes">
-                    <constraints/>
+                  <scrollpane id="56726">
+                    <constraints>
+                      <card name="table"/>
+                    </constraints>
                     <properties>
                       <background color="-14800580"/>
-                      <showHorizontalLines value="false"/>
-                      <showVerticalLines value="false"/>
+                    </properties>
+                    <border type="empty">
+                      <size top="20" left="10" bottom="20" right="10"/>
+                    </border>
+                    <children>
+                      <component id="784a6" class="javax.swing.JTable" binding="tableNodes">
+                        <constraints/>
+                        <properties>
+                          <background color="-14800580"/>
+                          <showHorizontalLines value="false"/>
+                          <showVerticalLines value="false"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </scrollpane>
+                  <component id="7ff91" class="javax.swing.JLabel" binding="loadingNodes">
+                    <constraints>
+                      <card name="loading"/>
+                    </constraints>
+                    <properties>
+                      <alignmentX value="0.5"/>
+                      <font name="JetBrains Mono Medium" size="26" style="3"/>
+                      <foreground color="-2171175"/>
+                      <horizontalAlignment value="0"/>
+                      <horizontalTextPosition value="0"/>
+                      <maximumSize width="-1" height="-1"/>
+                      <minimumSize width="-1" height="-1"/>
+                      <preferredSize width="-1" height="-1"/>
+                      <text value="Loading..."/>
+                      <verticalTextPosition value="3"/>
                     </properties>
                   </component>
                 </children>
-              </scrollpane>
+              </grid>
             </children>
           </grid>
-          <grid id="acaeb" binding="podsPanel" layout-manager="GridLayoutManager" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="10">
-            <margin top="10" left="10" bottom="0" right="0"/>
+          <grid id="acaeb" binding="podsPanel" layout-manager="GridLayoutManager" row-count="3" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="10">
+            <margin top="10" left="10" bottom="0" right="10"/>
             <constraints>
               <card name="Card3"/>
             </constraints>
@@ -501,51 +529,20 @@
             </properties>
             <border type="none"/>
             <children>
-              <scrollpane id="3d706">
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="1" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <background color="-14800580"/>
-                </properties>
-                <border type="empty">
-                  <size top="20" left="10" bottom="20" right="10"/>
-                </border>
-                <children>
-                  <component id="e44f8" class="javax.swing.JTable" binding="tablePods">
-                    <constraints/>
-                    <properties>
-                      <background color="-14800580"/>
-                      <showHorizontalLines value="false"/>
-                      <showVerticalLines value="false"/>
-                    </properties>
-                  </component>
-                </children>
-              </scrollpane>
               <component id="13a96" class="javax.swing.JButton" binding="addPodButton">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Add"/>
-                </properties>
-              </component>
-              <component id="f1c6f" class="javax.swing.JComboBox" binding="comboBoxFilterPodByNamespace">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="0" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="150" height="-1"/>
-                    <preferred-size width="150" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <background color="-14800580"/>
-                  <font name="JetBrains Mono Medium" size="16"/>
-                  <foreground color="-2171170"/>
+                  <actionCommand value="add"/>
+                  <iconTextGap value="10"/>
+                  <text value="Create"/>
+                  <toolTipText value="Create Pod"/>
                 </properties>
               </component>
               <hspacer id="7370">
                 <constraints>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
               </hspacer>
               <component id="104e9" class="javax.swing.JButton" binding="deletePodButton">
@@ -553,15 +550,18 @@
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
+                  <actionCommand value="delete"/>
+                  <iconTextGap value="10"/>
                   <text value="Delete"/>
+                  <toolTipText value="Delete Pod"/>
                 </properties>
               </component>
               <component id="76dbf" class="javax.swing.JToolBar$Separator">
                 <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                    <minimum-size width="-1" height="1"/>
-                    <preferred-size width="-1" height="1"/>
-                    <maximum-size width="-1" height="1"/>
+                  <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                    <minimum-size width="-1" height="2"/>
+                    <preferred-size width="-1" height="2"/>
+                    <maximum-size width="-1" height="2"/>
                   </grid>
                 </constraints>
                 <properties>
@@ -570,9 +570,73 @@
                   <opaque value="true"/>
                 </properties>
               </component>
+              <component id="f1c6f" class="javax.swing.JComboBox" binding="comboBoxFilterPodByNamespace">
+                <constraints>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="0" indent="0" use-parent-layout="false">
+                    <minimum-size width="230" height="-1"/>
+                    <preferred-size width="230" height="-1"/>
+                    <maximum-size width="230" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <background color="-14800580"/>
+                  <font name="JetBrains Mono Medium" size="16"/>
+                  <foreground color="-2171170"/>
+                </properties>
+              </component>
+              <grid id="1b36f" binding="podsLoading" layout-manager="CardLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <background color="-15525073"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <scrollpane id="3d706">
+                    <constraints>
+                      <card name="table"/>
+                    </constraints>
+                    <properties>
+                      <background color="-15525073"/>
+                    </properties>
+                    <border type="empty">
+                      <size top="0" left="10" bottom="20" right="10"/>
+                    </border>
+                    <children>
+                      <component id="e44f8" class="javax.swing.JTable" binding="tablePods">
+                        <constraints/>
+                        <properties>
+                          <background color="-15525073"/>
+                          <showHorizontalLines value="false"/>
+                          <showVerticalLines value="false"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </scrollpane>
+                  <component id="c591e" class="javax.swing.JLabel" binding="loadingPods">
+                    <constraints>
+                      <card name="loading"/>
+                    </constraints>
+                    <properties>
+                      <alignmentX value="0.5"/>
+                      <background color="-15525073"/>
+                      <font name="JetBrains Mono Medium" size="26" style="3"/>
+                      <foreground color="-2171170"/>
+                      <horizontalAlignment value="0"/>
+                      <horizontalTextPosition value="0"/>
+                      <maximumSize width="-1" height="-1"/>
+                      <minimumSize width="-1" height="-1"/>
+                      <preferredSize width="-1" height="-1"/>
+                      <text value="Loading..."/>
+                      <verticalTextPosition value="3"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
             </children>
           </grid>
-          <grid id="d3f8" binding="deploymentsPanel" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="10">
+          <grid id="d3f8" binding="deploymentsPanel" layout-manager="GridLayoutManager" row-count="2" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="10">
             <margin top="10" left="10" bottom="0" right="0"/>
             <constraints>
               <card name="Card4"/>
@@ -587,7 +651,10 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Create Deployment"/>
+                  <actionCommand value="add"/>
+                  <iconTextGap value="10"/>
+                  <text value="Create"/>
+                  <toolTipText value="Create Deployment"/>
                 </properties>
               </component>
               <component id="af841" class="javax.swing.JButton" binding="deleteDeploymentButton" default-binding="true">
@@ -595,28 +662,74 @@
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Delete Deployment"/>
+                  <actionCommand value="delete"/>
+                  <iconTextGap value="10"/>
+                  <text value="Delete"/>
+                  <toolTipText value="Delete Deployment"/>
                 </properties>
-              </component>
-              <component id="fd5f7" class="javax.swing.JTable" binding="tableDeployments">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="50"/>
-                  </grid>
-                </constraints>
-                <properties/>
               </component>
               <hspacer id="f02c8">
                 <constraints>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
               </hspacer>
               <component id="a2f20" class="javax.swing.JComboBox" binding="comboBoxDeployment">
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                    <minimum-size width="230" height="-1"/>
+                    <preferred-size width="230" height="-1"/>
+                    <maximum-size width="230" height="-1"/>
+                  </grid>
                 </constraints>
-                <properties/>
+                <properties>
+                  <autoscrolls value="true"/>
+                  <requestFocusEnabled value="true"/>
+                </properties>
               </component>
+              <grid id="d215" binding="deploymentLoading" layout-manager="CardLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <background color="-15525073"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="1dfb" class="javax.swing.JLabel" binding="loadingDeployments">
+                    <constraints>
+                      <card name="loading"/>
+                    </constraints>
+                    <properties>
+                      <alignmentX value="0.5"/>
+                      <background color="-15525073"/>
+                      <font name="JetBrains Mono Medium" size="26" style="3"/>
+                      <foreground color="-2171170"/>
+                      <horizontalAlignment value="0"/>
+                      <horizontalTextPosition value="0"/>
+                      <maximumSize width="-1" height="-1"/>
+                      <minimumSize width="-1" height="-1"/>
+                      <preferredSize width="-1" height="-1"/>
+                      <text value="Loading..."/>
+                      <verticalTextPosition value="3"/>
+                    </properties>
+                  </component>
+                  <scrollpane id="8157d">
+                    <constraints>
+                      <card name="table"/>
+                    </constraints>
+                    <properties>
+                      <background color="-15525073"/>
+                    </properties>
+                    <border type="empty"/>
+                    <children>
+                      <component id="fd5f7" class="javax.swing.JTable" binding="tableDeployments">
+                        <constraints/>
+                        <properties/>
+                      </component>
+                    </children>
+                  </scrollpane>
+                </children>
+              </grid>
             </children>
           </grid>
           <grid id="a3d57" binding="namespacesPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -628,7 +741,47 @@
               <background color="-15525073"/>
             </properties>
             <border type="none"/>
-            <children/>
+            <children>
+              <grid id="237cd" binding="namespacesLoading" layout-manager="CardLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="5bcf3" class="javax.swing.JLabel" binding="loadingNamespaces">
+                    <constraints>
+                      <card name="loading"/>
+                    </constraints>
+                    <properties>
+                      <alignmentX value="0.5"/>
+                      <font name="JetBrains Mono Medium" size="26" style="3"/>
+                      <foreground color="-2171170"/>
+                      <horizontalAlignment value="0"/>
+                      <horizontalTextPosition value="0"/>
+                      <maximumSize width="-1" height="-1"/>
+                      <minimumSize width="-1" height="-1"/>
+                      <preferredSize width="-1" height="-1"/>
+                      <text value="Loading..."/>
+                      <verticalTextPosition value="3"/>
+                    </properties>
+                  </component>
+                  <scrollpane id="f01c1">
+                    <constraints>
+                      <card name="table"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="218f2" class="javax.swing.JTable" binding="table1" default-binding="true">
+                        <constraints/>
+                        <properties/>
+                      </component>
+                    </children>
+                  </scrollpane>
+                </children>
+              </grid>
+            </children>
           </grid>
           <grid id="11e0d" binding="servicesPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
@@ -639,7 +792,49 @@
               <background color="-15525073"/>
             </properties>
             <border type="none"/>
-            <children/>
+            <children>
+              <grid id="49939" binding="servicesLoading" layout-manager="CardLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <background color="-15525073"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="b5515" class="javax.swing.JLabel" binding="loadingServices">
+                    <constraints>
+                      <card name="loading"/>
+                    </constraints>
+                    <properties>
+                      <alignmentX value="0.5"/>
+                      <font name="JetBrains Mono Medium" size="26" style="3"/>
+                      <foreground color="-2171170"/>
+                      <horizontalAlignment value="0"/>
+                      <horizontalTextPosition value="0"/>
+                      <maximumSize width="-1" height="-1"/>
+                      <minimumSize width="-1" height="-1"/>
+                      <preferredSize width="-1" height="-1"/>
+                      <text value="Loading..."/>
+                      <verticalTextPosition value="3"/>
+                    </properties>
+                  </component>
+                  <scrollpane id="b3673">
+                    <constraints>
+                      <card name="table"/>
+                    </constraints>
+                    <properties/>
+                    <border type="empty"/>
+                    <children>
+                      <component id="f687" class="javax.swing.JTable" binding="tableServices">
+                        <constraints/>
+                        <properties/>
+                      </component>
+                    </children>
+                  </scrollpane>
+                </children>
+              </grid>
+            </children>
           </grid>
           <grid id="c166a" binding="searchPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>

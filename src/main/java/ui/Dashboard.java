@@ -73,6 +73,18 @@ public class Dashboard  {
     private JComboBox comboBoxFilterPodByNamespace;
     private JButton addPodButton;
     private JButton deletePodButton;
+    private JLabel loadingNodes;
+    private JPanel nodesLoading;
+    private JPanel podsLoading;
+    private JLabel loadingPods;
+    private JPanel namespacesLoading;
+    private JTable table1;
+    private JPanel deploymentLoading;
+    private JLabel loadingDeployments;
+    private JLabel loadingNamespaces;
+    private JPanel servicesLoading;
+    private JLabel loadingServices;
+    private JTable tableServices;
     private KubernetesClient client;
 
     public Dashboard() throws Exception {
@@ -135,7 +147,7 @@ public class Dashboard  {
             navbarButtonEffect(podsButton);
             hideContentPanels();
             try {
-                fillFilterCombobox(comboBoxFilterPodByNamespace);
+                fillFilterComboboxByNamespaces(comboBoxFilterPodByNamespace);
                 Object selectedItem = comboBoxFilterPodByNamespace.getSelectedItem();
                 if(selectedItem == null){
                     fillPodsTable("");
@@ -235,6 +247,7 @@ public class Dashboard  {
                 throw new RuntimeException(ex);
             }
         });
+
     }
 
 
@@ -242,46 +255,71 @@ public class Dashboard  {
     ///
 
     private void fillNodesTable() throws Exception {
-        String[] columNames = new String[]{"Name", "Status", "Ip", "Pods Running", "Max Pods"};
-        DefaultTableModel model = new DefaultTableModel(columNames, 0) {
+        CardLayout cl = (CardLayout) nodesLoading.getLayout();
+        loadingNodes.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
+        cl.show(nodesLoading, "loading");
+
+        SwingWorker<DefaultTableModel, Void> worker = new SwingWorker<>() {
+
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
+            protected DefaultTableModel doInBackground() throws Exception {
+
+                String[] columNames = new String[]{"Name", "Status", "Ip", "Pods Running", "Max Pods"};
+                DefaultTableModel model = new DefaultTableModel(columNames, 0) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return false;
+                    }
+                };
+                for (V1Node node : client.getNodeService().getAllNodes().getItems()) {
+                    String nodeName = Objects.requireNonNull(node.getMetadata()).getName();
+                    String status = Objects.requireNonNull(Objects.requireNonNull(node.getStatus()).getConditions()).stream()
+                            .filter(c -> "Ready".equals(c.getType()))
+                            .findFirst()
+                            .map(c -> "True".equals(c.getStatus()) ? "Up" : "Down")
+                            .orElse("Unknown");
+
+                    String ip = Objects.requireNonNull(node.getStatus().getAddresses()).getFirst().getAddress();
+
+                    Map<String, Quantity> capacity = node.getStatus().getCapacity();
+
+                    String capacityPods    = Objects.requireNonNull(capacity).get("pods").getNumber().toString();
+                    V1PodList podList = client.getPodService().listPodsByNode(nodeName); // listPodForAllNamespaces
+                    long runningPods = podList.getItems().stream()
+                            .filter(pod -> pod.getSpec() != null
+                                    && Objects.requireNonNull(nodeName).equals(pod.getSpec().getNodeName())
+                                    && pod.getStatus() != null
+                                    && "Running".equals(pod.getStatus().getPhase()))
+                            .count();
+
+                    Object[] row = {
+                            nodeName,
+                            status,
+                            ip,
+                            runningPods,
+                            capacityPods
+                    };
+                    model.addRow(row);
+                }
+                return model;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    DefaultTableModel model = get(); // retrieves result from doInBackground()
+                    tableNodes.setModel(model);
+                    formatTables(tableNodes);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // Handle or display the error in the UI
+                } finally {
+                    cl.show(nodesLoading, "table");
+                }
             }
         };
-        for (V1Node node : client.getNodeService().getAllNodes().getItems()) {
-            String nodeName = Objects.requireNonNull(node.getMetadata()).getName();
-            String status = Objects.requireNonNull(Objects.requireNonNull(node.getStatus()).getConditions()).stream()
-                    .filter(c -> "Ready".equals(c.getType()))
-                    .findFirst()
-                    .map(c -> "True".equals(c.getStatus()) ? "Up" : "Down")
-                    .orElse("Unknown");
 
-            String ip = Objects.requireNonNull(node.getStatus().getAddresses()).getFirst().getAddress();
-
-            Map<String, Quantity> capacity = node.getStatus().getCapacity();
-
-            String capacityPods    = Objects.requireNonNull(capacity).get("pods").getNumber().toString();
-            V1PodList podList = client.getPodService().listPodsByNode(nodeName); // listPodForAllNamespaces
-            long runningPods = podList.getItems().stream()
-                    .filter(pod -> pod.getSpec() != null
-                            && Objects.requireNonNull(nodeName).equals(pod.getSpec().getNodeName())
-                            && pod.getStatus() != null
-                            && "Running".equals(pod.getStatus().getPhase()))
-                    .count();
-
-            Object[] row = {
-                    nodeName,
-                    status,
-                    ip,
-                    runningPods,
-                    capacityPods
-            };
-            model.addRow(row);
-        }
-        tableNodes.setModel(model);
-        formatTables(tableNodes);
-
+        worker.execute();
     }
 
     ////################Pods#################
@@ -308,24 +346,54 @@ public class Dashboard  {
 
 
     private void fillPodsTable(String namespace) throws Exception {
-        String[] columNames = new String[]{"Name", "Status", "Node", "Namespace", "Pod IP", "Creation Date"};
-        DefaultTableModel model = new DefaultTableModel(columNames, 0) {
+        CardLayout cl = (CardLayout) podsLoading.getLayout();
+        loadingPods.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
+        cl.show(podsLoading, "loading");
+
+        SwingWorker<DefaultTableModel, Void> worker = new SwingWorker<>() {
+
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
+            protected DefaultTableModel doInBackground() throws Exception {
+                String[] columnNames = new String[]{"Name", "Status", "Node", "Namespace", "Pod IP", "Creation Date"};
+                DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return false;
+                    }
+                };
+
+                V1PodList podList;
+                if (namespace.isEmpty()) {
+                    podList = client.getPodService().getAllPods();
+                } else {
+                    podList = client.getPodService().getAllPodsOnNamespace(namespace);
+                }
+
+                for (V1Pod pod : podList.getItems()) {
+                    Object[] row = getObjects(pod);
+                    model.addRow(row);
+                }
+
+                return model;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    DefaultTableModel model = get(); // retrieves result from doInBackground()
+                    tablePods.setModel(model);
+                    formatTables(tablePods);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // Handle or display the error in the UI
+                } finally {
+                    // setLoadingState(false);
+                    cl.show(podsLoading, "table");
+                }
             }
         };
-        V1PodList podList =client.getPodService().getAllPods();
-        if (!namespace.isEmpty()) {
-            podList.getItems().clear();
-            podList = client.getPodService().getAllPodsOnNamespace(namespace);
-        }
-        for (V1Pod pod : podList.getItems()) {
-            Object[] row = getObjects(pod);
-            model.addRow(row);
-        }
-        tablePods.setModel(model);
-        formatTables(tablePods);
+
+        worker.execute();
 
     }
 
@@ -351,19 +419,55 @@ public class Dashboard  {
     ///
     private void fillDeploymentTable() throws ApiException {
 
-        fillFilterCombobox(comboBoxDeployment);
-        String[] columNames = {"Name", "Namespace", "Resource Version"};
-        try {
-            for (V1Deployment dep : client.getDeploymentService().getAllDeployments().getItems()) {
-                Object[] row = {
-                        dep.getMetadata() != null ? dep.getMetadata().getName() : null,
-                        dep.getMetadata() != null ? dep.getMetadata().getNamespace() : null,
-                        dep.getMetadata() != null ? dep.getMetadata().getResourceVersion() : null
+        CardLayout cl = (CardLayout) deploymentLoading.getLayout();
+        loadingDeployments.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
+        cl.show(deploymentLoading, "loading");
+
+        SwingWorker<DefaultTableModel, Void> worker = new SwingWorker<>() {
+
+            @Override
+            protected DefaultTableModel doInBackground() throws Exception {
+                fillFilterComboboxByNamespaces(comboBoxDeployment);
+                String[] columNames = {"Name", "Namespace", "Resource Version"};
+                DefaultTableModel model = new DefaultTableModel(columNames, 0) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return false;
+                    }
                 };
+                try {
+                    for (V1Deployment dep : client.getDeploymentService().getAllDeployments().getItems()) {
+                        Object[] row = {
+                                dep.getMetadata() != null ? dep.getMetadata().getName() : null,
+                                dep.getMetadata() != null ? dep.getMetadata().getNamespace() : null,
+                                dep.getMetadata() != null ? dep.getMetadata().getResourceVersion() : null
+                        };
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                return model;
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
+            @Override
+            protected void done() {
+                try {
+                    DefaultTableModel model = get(); // retrieves result from doInBackground()
+                    tableDeployments.setModel(model);
+                    formatTables(tableDeployments);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // Handle or display the error in the UI
+                } finally {
+                    // setLoadingState(false);
+                    cl.show(deploymentLoading, "table");
+                }
+            }
+        };
+
+        worker.execute();
+
 
     }
 
@@ -652,7 +756,7 @@ public class Dashboard  {
     ////################Utilities Functions#################
     ///
 
-    private void fillFilterCombobox(JComboBox comboBox) throws ApiException {
+    private void fillFilterComboboxByNamespaces(JComboBox comboBox) throws ApiException {
         comboBox.removeAllItems();
         for (V1Namespace namespace : client.getNamespaceService().getAllNamespaces().getItems()){
             if (namespace.getMetadata() != null) {
@@ -978,10 +1082,20 @@ public class Dashboard  {
         };
 
         for (AbstractButton btn : buttons) {
-            StyleFunctions.hoverButtonEffect(btn);
+            StyleFunctions.setIconsButton(btn);
+            if (Objects.equals(btn.getActionCommand(), "add")){
+                icon = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/add.png"))).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+            }
+            if (Objects.equals(btn.getActionCommand(), "delete")){
+                icon = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/delete.png"))).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+
+            }
+            btn.setIcon(new ImageIcon(icon));
         }
 
         StyleFunctions.setTextFieldStyle(searchBar);
+
+
 
     }
 

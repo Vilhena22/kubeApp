@@ -34,8 +34,8 @@ public class CreatePod extends JDialog {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonNext);
-        setLocationRelativeTo(null);
         pack();
+        setLocationRelativeTo(null);
 
         try {
             styleButtons();
