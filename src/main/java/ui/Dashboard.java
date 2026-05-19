@@ -199,8 +199,6 @@ public class Dashboard  {
             namespacesPanel.setVisible(true);
 
                 fillNamespaceTable();
-
-            }
         });
 
         searchBar.addKeyListener(new KeyAdapter() {
@@ -345,7 +343,7 @@ public class Dashboard  {
                 return false;
             }
         };
-        V1PodList podList =client.getPodService().getAllPods();
+        V1PodList podList = client.getPodService().getAllPods();
         if (!namespace.isEmpty()) {
             podList.getItems().clear();
             podList = client.getPodService().getAllPodsOnNamespace(namespace);
