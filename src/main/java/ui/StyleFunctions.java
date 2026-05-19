@@ -88,6 +88,16 @@ public class StyleFunctions {
         });
     }
 
+    public  static void setTextAreaStyle(JTextArea textArea){
+        textArea.setBackground(new Color(19,27,47));
+        textArea.setForeground(text);
+        textArea.setCaretColor(text);
+        textArea.setSelectionColor(hover);
+        textArea.setSelectedTextColor(text);
+        textArea.setBorder(BorderFactory.createLineBorder(border));
+        textArea.setFont(new Font("JetBrains Mono Medium", Font.PLAIN, 16));
+    }
+
     public static void setComboBoxStyle(JComboBox comboBox){
         comboBox.setBackground(bg);
         comboBox.setForeground(text);

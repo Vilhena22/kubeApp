@@ -6,7 +6,6 @@ import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Namespace;
-import io.kubernetes.client.openapi.models.V1Status;
 import io.kubernetes.client.openapi.models.*;
 import model.IconType;
 import model.Result;
@@ -73,7 +72,6 @@ public class Dashboard  {
     private JButton createNamespaceButton;
     private JButton deleteNamespaceButton;
     private JTable namespaceTable;
-    private JTable valueTableCard3;
     private JTable tableDeployments;
     private JTable tableNodes;
     private JPanel searchPanel;
@@ -87,13 +85,15 @@ public class Dashboard  {
     private JPanel podsLoading;
     private JLabel loadingPods;
     private JPanel namespacesLoading;
-    private JTable table1;
+    private JTable tableNamespaces;
     private JPanel deploymentLoading;
     private JLabel loadingDeployments;
     private JLabel loadingNamespaces;
     private JPanel servicesLoading;
     private JLabel loadingServices;
     private JTable tableServices;
+    private JButton addNodeButton;
+    private JButton deleteNodeButton;
     private KubernetesClient client;
 
     public Dashboard() throws Exception {
@@ -118,6 +118,8 @@ public class Dashboard  {
         navbarButtonEffect(dashboardButton);
 
         deploymentsButton.addActionListener(this::btnDeleteDeployment);
+        addNodeButton.addActionListener(this::btnAddNode);
+        deleteNodeButton.addActionListener(this::btnDeleteNode);
 
         dashboardButton.addActionListener(e -> {
             for (Component c : navbarPanel.getComponents()){
@@ -260,25 +262,34 @@ public class Dashboard  {
         });
     }
 
-    private void btnDeleteDeployment(ActionEvent actionEvent) {
-
-        String name = "";
-        String namespace = "";
-
-        for (int row : tableDeployments.getSelectedRows()) {
-            try {
-                name = tableDeployments.getValueAt(row,0).toString();
-                namespace = tableDeployments.getValueAt(row, 1 ).toString();
-                client.getDeploymentService().deleteDeployment(name, namespace);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
 
 
     ///################Nodes#################
     ///
+
+    private void btnAddNode(ActionEvent actionEvent){
+        try {
+            new CreateNode(client);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void btnDeleteNode(ActionEvent actionEvent) {
+        for (int row : tableNodes.getSelectedRows()){
+            try {
+                client.getNodeService().deleteNode(tableNodes.getValueAt(row,1).toString());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        new InfoDialog("All Nodes Deleted!",IconType.SUCCESS);
+        try {
+            fillNodesTable();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private void fillNodesTable() throws Exception {
         CardLayout cl = (CardLayout) nodesLoading.getLayout();
@@ -443,6 +454,23 @@ public class Dashboard  {
 
     ////################Deployments#################
     ///
+
+    private void btnDeleteDeployment(ActionEvent actionEvent) {
+
+        String name = "";
+        String namespace = "";
+
+        for (int row : tableDeployments.getSelectedRows()) {
+            try {
+                name = tableDeployments.getValueAt(row,0).toString();
+                namespace = tableDeployments.getValueAt(row, 1 ).toString();
+                client.getDeploymentService().deleteDeployment(name, namespace);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     private void fillDeploymentTable() throws ApiException {
 
         CardLayout cl = (CardLayout) deploymentLoading.getLayout();
@@ -497,46 +525,63 @@ public class Dashboard  {
 
     }
 
+    ////################Namespaces#################
+    ///
+
     public void fillNamespaceTable(){
 
-        String[] columnNames = {"Name", "Creation Timestamp", "State"};
-        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        CardLayout cl = (CardLayout) namespacesLoading.getLayout();
+        loadingNamespaces.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
+        cl.show(namespacesLoading, "loading");
 
-        try {
-            for (V1Namespace nm : client.getNamespaceService().getAllNamespaces().getItems()) {
-                Object[] row = {
-                        nm.getMetadata().getName(),
-                        nm.getMetadata().getCreationTimestamp(),
-                        nm.getStatus().getPhase()
+
+        SwingWorker<DefaultTableModel, Void> worker = new SwingWorker<>() {
+
+            @Override
+            protected DefaultTableModel doInBackground() throws Exception {
+                String[] columnNames = {"Name", "State","Creation Timestamp"};
+                DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return false;
+                    }
                 };
-                model.addRow(row);
+                try {
+                    for (V1Namespace nm : client.getNamespaceService().getAllNamespaces().getItems()) {
+                        Object[] row = {
+                                nm.getMetadata().getName(),
+                                nm.getStatus().getPhase(),
+                                nm.getMetadata().getCreationTimestamp(),
+                        };
+                        model.addRow(row);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                return model;
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
 
-        namespaceTable.setModel(model);
+            @Override
+            protected void done() {
+                try {
+                    DefaultTableModel model = get(); // retrieves result from doInBackground()
+                    tableNamespaces.setModel(model);
+                    formatTables(tableNamespaces);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // Handle or display the error in the UI
+                } finally {
+                    // setLoadingState(false);
+                    cl.show(namespacesLoading, "table");
+                }
+            }
+        };
 
-        //centrar o texto das colunas 1 e 2
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        worker.execute();
 
-        for (int i = 1; i < namespaceTable.getColumnCount(); i++) {
-            namespaceTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-        }
     }
 
-    public JPanel getPanel() {
-        return mainPanel;
-    }
-
-
-    private KubernetesClient connectClient(){
-            return new KubernetesClient(
-                    AppSetup.getK3sHost(),
-                    AppSetup.getK3sToken()
-            );
-    }
 
 
     ////################Dashboard#################
@@ -810,6 +855,17 @@ public class Dashboard  {
     ////################Utilities Functions#################
     ///
 
+    public JPanel getPanel() {
+        return mainPanel;
+    }
+
+    private KubernetesClient connectClient(){
+        return new KubernetesClient(
+                AppSetup.getK3sHost(),
+                AppSetup.getK3sToken()
+        );
+    }
+
     private void fillFilterComboboxByNamespaces(JComboBox comboBox) throws ApiException {
         comboBox.removeAllItems();
         for (V1Namespace namespace : client.getNamespaceService().getAllNamespaces().getItems()){
@@ -1061,7 +1117,7 @@ public class Dashboard  {
             case "deployment" -> new Color[]{new Color(80, 40, 120),  new Color(180, 80, 255), new Color(120, 50, 180)};
             case "pod"        -> new Color[]{new Color(20, 80, 60),   new Color(0, 220, 130),  new Color(0, 160, 90)};
             case "namespace"  -> new Color[]{new Color(100, 60, 0),   new Color(255, 180, 0),  new Color(180, 120, 0)};
-            case "up", "running" -> new Color[]{new Color(0, 80, 40),    new Color(0, 255, 100),  new Color(0, 200, 80)};
+            case "up", "running", "active" -> new Color[]{new Color(0, 80, 40),    new Color(0, 255, 100),  new Color(0, 200, 80)};
             case "down"       -> new Color[]{new Color(80, 20, 20),   new Color(255, 80, 80),  new Color(200, 50, 50)};
             case "pending"   -> new Color[]{new Color(90, 70, 20), new Color(255, 210, 80),new Color(180, 140, 40)};
             case "succeeded" -> new Color[]{new Color(20, 60, 120),new Color(80, 180, 255),new Color(40, 120, 200)};
@@ -1131,6 +1187,7 @@ public class Dashboard  {
 
 
         buttons = new AbstractButton[]{
+                addNodeButton,deleteNodeButton,
                 createDeploymentButton,deleteDeploymentButton, //Deployment Buttons
                 addPodButton,deletePodButton //Pods Buttons
         };

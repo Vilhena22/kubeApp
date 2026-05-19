@@ -70,7 +70,7 @@ public class KubernetesClient {
     }
 
     public ClusterService getClusterService() {
-        if (clusterService == null) clusterService = new ClusterService();
+        if (clusterService == null) clusterService = new ClusterService(getKubernetesClient());
         return clusterService;
     }
 
