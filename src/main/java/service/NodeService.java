@@ -140,6 +140,17 @@ public class NodeService {
 
     }
 
+    public long getPodsRunOnPod(String nodeName) throws Exception {
+        V1PodList podList = client.getPodService().listPodsByNode(nodeName);
+        return podList.getItems().stream()
+                .filter(pod -> pod.getSpec() != null
+                        && Objects.requireNonNull(nodeName).equals(pod.getSpec().getNodeName())
+                        && pod.getStatus() != null
+                        && "Running".equals(pod.getStatus().getPhase()))
+                .count();
+    }
+
+
     public List<Result> getFreeStorage() throws Exception {
         String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
         ObjectMapper mapper = new ObjectMapper();
@@ -148,13 +159,6 @@ public class NodeService {
 
     }
 
-    public List<Result> getCpuPercentageByNode() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
-        ObjectMapper mapper = new ObjectMapper();
-        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
-        return response.data.getResult();
-
-    }
 
     public List<Result> getRamUsageByNode() throws Exception {
         String json = HttpSendRequest.sendRequestGet("kube_node_status_condition{condition=\"Ready\",status=\"true\"}");
@@ -165,7 +169,7 @@ public class NodeService {
     }
 
     public List<Result> getCPUAvgByNode() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("sum(rate(container_cpu_usage_seconds_total[5m])) by (pod)");
+        String json = HttpSendRequest.sendRequestGet("sum(rate(container_cpu_usage_seconds_total[5m])) by (node)");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         return response.data.getResult();
@@ -173,7 +177,7 @@ public class NodeService {
     }
 
     public List<Result> getRamByNode() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("sum(container_memory_usage_bytes) by (pod)");
+        String json = HttpSendRequest.sendRequestGet("sum(container_memory_usage_bytes) by (node)");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         return response.data.getResult();
@@ -181,7 +185,7 @@ public class NodeService {
     }
 
     public List<Result> getNetworkByNode() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("sum(rate(container_network_receive_bytes_total[5m])) by (pod)");
+        String json = HttpSendRequest.sendRequestGet("sum(rate(container_network_receive_bytes_total[5m])) by (node)");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         return response.data.getResult();

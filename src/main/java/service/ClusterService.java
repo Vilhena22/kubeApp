@@ -10,6 +10,7 @@ import model.PrometheusResponse;
 import model.Result;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -24,8 +25,7 @@ public class ClusterService {
         this.client = client;
     }
 
-    public V1NodeList getAllMastersNodes() throws Exception
-    {
+    public V1NodeList getAllMastersNodes() throws Exception {
         V1NodeList masters = new V1NodeList();
         for (V1Node node : client.getNodeService().getAllNodes().getItems()) {
             Map<String, String> labels = node.getMetadata().getLabels();
@@ -40,11 +40,14 @@ public class ClusterService {
         return masters;
     }
 
-    public List<Result> getCPUPercentage() throws Exception {
+    public double getCPUPercentage() throws Exception {
         String json = HttpSendRequest.sendRequestGet("sum(rate(container_cpu_usage_seconds_total[5m]))/sum(machine_cpu_cores)");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
-        return response.data.getResult();
+        Result result = response.data.getResult().getLast();
+        double value = Double.parseDouble(result.getValue().getLast().toString());
+
+        return value * 100;
 
     }
 
@@ -75,12 +78,12 @@ public class ClusterService {
         return Integer.parseInt(value);
     }
 
-    public List<Result> getRamPercentage() throws Exception {
+    public double getRamPercentage() throws Exception {
         String json = HttpSendRequest.sendRequestGet("sum(container_memory_working_set_bytes{container!=\"\"}) / sum(machine_memory_bytes) * 100");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
-        return response.data.getResult();
-
+        Result result = response.data.getResult().getLast();
+        return Double.parseDouble(result.getValue().getLast().toString());
     }
 
     public List<Result> getClusterSpecs() throws Exception {

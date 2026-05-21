@@ -51,17 +51,6 @@ public class StyleFunctions {
         btn.setFont(font);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setBorder(BorderFactory.createLineBorder(iconButtonBG));
-        /*btn.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                btn.setBackground(hover);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                btn.setBackground(iconButtonBG);
-            }
-        });*/
     }
 
     public  static void setTextFieldStyle(JTextField searchBar){
@@ -185,4 +174,5 @@ public class StyleFunctions {
             public void popupMenuCanceled(PopupMenuEvent e) {}
         });
     }
+
 }

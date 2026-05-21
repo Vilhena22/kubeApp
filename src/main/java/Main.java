@@ -1,5 +1,7 @@
 
 import Handlers.AppSetup;
+import ai.AiFactory;
+import ai.Assistant;
 import api.KubernetesClient;
 import com.formdev.flatlaf.FlatDarkLaf;
 import model.IconType;
@@ -11,6 +13,9 @@ import ui.InfoDialog;
 
 import javax.swing.*;
 import java.awt.*;
+import java.security.MessageDigest;
+import java.security.Provider;
+import java.security.Security;
 
 public class Main {
     public static void main(String[] args) {

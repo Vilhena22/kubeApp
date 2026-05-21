@@ -113,5 +113,29 @@ public class PodService {
 
     }
 
+    public List<Result> getCPUAvgByPod() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("sum(rate(container_cpu_usage_seconds_total[5m])) by (pod)");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
+    }
+
+    public List<Result> getRamByPod() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("sum(container_memory_usage_bytes) by (pod)");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
+    }
+
+    public List<Result> getNetworkByPod() throws Exception {
+        String json = HttpSendRequest.sendRequestGet("sum(rate(container_network_receive_bytes_total[5m])) by (pod)");
+        ObjectMapper mapper = new ObjectMapper();
+        PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
+        return response.data.getResult();
+
+    }
+
 
 }

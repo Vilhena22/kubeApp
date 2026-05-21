@@ -1,6 +1,9 @@
 package ui;
 
 import Handlers.AppSetup;
+import ai.AiFactory;
+import ai.Assistant;
+import ai.Tools;
 import api.KubernetesClient;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
@@ -24,6 +27,10 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
@@ -94,7 +101,15 @@ public class Dashboard  {
     private JTable tableServices;
     private JButton addNodeButton;
     private JButton deleteNodeButton;
+    private JButton buttonChatBot;
+    private JTextPane chatBox;
+    private JTextArea userInputArea;
+    private JPanel chatWindow;
     private KubernetesClient client;
+    private Assistant assistant = null;
+    private Tools tools = null;
+    private Style userStyle;
+    private Style aiStyle;
 
     public Dashboard() throws Exception {
 
@@ -120,6 +135,7 @@ public class Dashboard  {
         deploymentsButton.addActionListener(this::btnDeleteDeployment);
         addNodeButton.addActionListener(this::btnAddNode);
         deleteNodeButton.addActionListener(this::btnDeleteNode);
+        buttonChatBot.addActionListener(this::btnOpenChat);
 
         dashboardButton.addActionListener(e -> {
             for (Component c : navbarPanel.getComponents()){
@@ -260,8 +276,70 @@ public class Dashboard  {
                 throw new RuntimeException(ex);
             }
         });
+        userInputArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if(e.getKeyCode() == KeyEvent.VK_ENTER && !e.isShiftDown()){
+                    e.consume();
+                    userInputArea.selectAll();
+                    String question = userInputArea.getText();
+                    userInputArea.setText("");
+                    StyledDocument doc = chatBox.getStyledDocument();
+                    try {
+                        doc.insertString(
+                                doc.getLength(),
+                                "You: " + question + "\n\n",
+                                userStyle
+                        );
+                    } catch (BadLocationException ex) {
+                        throw new RuntimeException(ex);
+                    }
+
+                    SwingWorker<String, Void> worker =
+                            new SwingWorker<>() {
+
+                                @Override
+                                protected String doInBackground() {
+                                    return assistant.chat(question);
+                                }
+
+                                @Override
+                                protected void done() {
+
+                                    try {
+
+                                        String response = get();
+
+                                        StyledDocument doc =
+                                                chatBox.getStyledDocument();
+
+                                        doc.insertString(
+                                                doc.getLength(),
+                                                "KubeBot: " + response + "\n\n",
+                                                aiStyle
+                                        );
+
+                                    } catch (Exception ex) {
+
+                                        ex.printStackTrace();
+                                    }
+                                }
+                            };
+
+                    worker.execute();
+                }
+            }
+        });
     }
 
+    private void btnOpenChat(ActionEvent actionEvent) {
+        if (assistant==null && tools == null){
+            tools = new Tools(client);
+            assistant = AiFactory.createAssistant(tools);
+        }
+        boolean isVisible = chatWindow.isVisible();
+        chatWindow.setVisible(!isVisible);
+    }
 
 
     ///################Nodes#################
@@ -321,13 +399,7 @@ public class Dashboard  {
                     Map<String, Quantity> capacity = node.getStatus().getCapacity();
 
                     String capacityPods    = Objects.requireNonNull(capacity).get("pods").getNumber().toString();
-                    V1PodList podList = client.getPodService().listPodsByNode(nodeName); // listPodForAllNamespaces
-                    long runningPods = podList.getItems().stream()
-                            .filter(pod -> pod.getSpec() != null
-                                    && Objects.requireNonNull(nodeName).equals(pod.getSpec().getNodeName())
-                                    && pod.getStatus() != null
-                                    && "Running".equals(pod.getStatus().getPhase()))
-                            .count();
+                    long runningPods = client.getNodeService().getPodsRunOnPod(nodeName);
 
                     Object[] row = {
                             nodeName,
@@ -782,9 +854,7 @@ public class Dashboard  {
     }
 
     private void getCPUPercentage() throws Exception {
-        Result result = client.getClusterService().getCPUPercentage().getLast();
-        double value = Double.parseDouble(result.getValue().getLast().toString());
-        value = value * 100;
+        double value = client.getClusterService().getCPUPercentage();
         if (value > 75.00 && value < 85.00) {
             valueCard1.setForeground(Color.ORANGE);
         }else if (value > 85.00) {
@@ -801,8 +871,8 @@ public class Dashboard  {
     }
 
     private void getRAMPercentage() throws Exception {
-        Result result = client.getClusterService().getRamPercentage().getLast();
-        double value = Double.parseDouble(result.getValue().getLast().toString());
+        double value = client.getClusterService().getRamPercentage();
+        System.out.println(value);
         if (value > 75.00 && value < 85.00) {
             valueCard2.setForeground(Color.ORANGE);
         }else if (value > 85.00) {
@@ -1189,7 +1259,8 @@ public class Dashboard  {
         buttons = new AbstractButton[]{
                 addNodeButton,deleteNodeButton,
                 createDeploymentButton,deleteDeploymentButton, //Deployment Buttons
-                addPodButton,deletePodButton //Pods Buttons
+                addPodButton,deletePodButton, //Pods Buttons
+                buttonChatBot
         };
 
         for (AbstractButton btn : buttons) {
@@ -1201,10 +1272,21 @@ public class Dashboard  {
                 icon = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/delete.png"))).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
 
             }
+            if (Objects.equals(btn.getActionCommand(), "chat")){
+                icon = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/chat.png"))).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+
+            }
             btn.setIcon(new ImageIcon(icon));
         }
+        buttonChatBot.setBackground(new Color(30,41,60));
+        buttonChatBot.setBorderPainted(false);
 
         StyleFunctions.setTextFieldStyle(searchBar);
+        StyleFunctions.setTextAreaStyle(userInputArea);
+        userInputArea.setBackground(new Color(30,41,60));
+
+        setChatStyles();
+        chatWindow.setVisible(false);
 
     }
 
@@ -1363,6 +1445,23 @@ public class Dashboard  {
         dataset.addValue(45, "RAM", "11:15");
         dataset.addValue(40, "RAM", "11:20");
         return dataset;
+    }
+
+    private void setChatStyles(){
+
+        userStyle = chatBox.addStyle("UserStyle", null);
+        StyleConstants.setAlignment(userStyle, StyleConstants.ALIGN_RIGHT);
+        StyleConstants.setForeground(userStyle, Color.WHITE);
+        StyleConstants.setBackground(userStyle, new Color(0, 120, 215));
+        StyleConstants.setFontFamily(userStyle, "Consolas");
+        StyleConstants.setFontSize(userStyle, 14);
+
+        aiStyle = chatBox.addStyle("AIStyle", null);
+        StyleConstants.setAlignment(aiStyle, StyleConstants.ALIGN_LEFT);
+        StyleConstants.setForeground(aiStyle, Color.WHITE);
+        StyleConstants.setBackground(aiStyle, new Color(60, 60, 60));
+        StyleConstants.setFontFamily(aiStyle, "Consolas");
+        StyleConstants.setFontSize(aiStyle, 14);
     }
 
 
