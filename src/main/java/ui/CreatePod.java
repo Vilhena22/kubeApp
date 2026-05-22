@@ -258,7 +258,7 @@ public class CreatePod extends JDialog {
                 textFieldPodName, textFieldContainerImage,textFieldAddNameSpace,textFieldDescription,textFieldContainerName,
         };
         for (JTextField textField : textFields){
-            StyleFunctions.setTextFieldStyle(textField);
+            StyleFunctions.setTextFieldStyle(textField,true);
         }
     }
 

@@ -15,6 +15,12 @@
         <javafx.version>21.0.6</javafx.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.45.1.0</version>
+        </dependency>
+
         <!-- Ai Dependecies -->
         <dependency>
             <groupId>dev.langchain4j</groupId>

@@ -40,7 +40,7 @@ public class CreateNode extends JDialog {
         }
         comboBoxMasters.setSelectedIndex(-1);
 
-        StyleFunctions.setTextAreaStyle(textAreaMessage);
+        StyleFunctions.setTextAreaStyle(textAreaMessage,true);
         StyleFunctions.hoverButtonEffect(buttonOK);
         StyleFunctions.hoverButtonEffect(buttonCancel);
         StyleFunctions.hoverButtonEffect(buttonBack);

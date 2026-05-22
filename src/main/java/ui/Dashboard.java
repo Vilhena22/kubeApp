@@ -1,6 +1,7 @@
 package ui;
 
 import Handlers.AppSetup;
+import Handlers.ClusterDAO;
 import ai.AiFactory;
 import ai.Assistant;
 import ai.Tools;
@@ -23,10 +24,8 @@ import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
+
 import javax.swing.table.DefaultTableModel;
-import javax.swing.plaf.basic.BasicTableHeaderUI;
-import javax.swing.table.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
@@ -105,6 +104,9 @@ public class Dashboard  {
     private JTextPane chatBox;
     private JTextArea userInputArea;
     private JPanel chatWindow;
+    private JComboBox comboServiceNamespace;
+    private JButton deleteServiceButton;
+    private JButton createServiceButton;
     private KubernetesClient client;
     private Assistant assistant = null;
     private Tools tools = null;
@@ -136,6 +138,10 @@ public class Dashboard  {
         addNodeButton.addActionListener(this::btnAddNode);
         deleteNodeButton.addActionListener(this::btnDeleteNode);
         buttonChatBot.addActionListener(this::btnOpenChat);
+
+        createServiceButton.addActionListener(this::btnCreateService);
+        deleteServiceButton.addActionListener(this::btnDeleteService);
+
 
         dashboardButton.addActionListener(e -> {
             for (Component c : navbarPanel.getComponents()){
@@ -214,7 +220,17 @@ public class Dashboard  {
             navbarButtonEffect(servicesButton);
             hideContentPanels();
             servicesPanel.setVisible(true);
-
+            try{
+                fillFilterComboboxByNamespaces(comboServiceNamespace);
+                Object selectedItem = comboServiceNamespace.getSelectedItem();
+                if(selectedItem == null){
+                    fillServicesTable("");
+                }else{
+                    fillServicesTable(selectedItem.toString());
+                }
+            }catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         });
 
         namespacesButton.addActionListener(e -> {
@@ -276,7 +292,21 @@ public class Dashboard  {
                 throw new RuntimeException(ex);
             }
         });
-        userInputArea.addKeyListener(new KeyAdapter() {
+
+        comboServiceNamespace.addItemListener(e -> {
+            try {
+                Object selectedItem = comboServiceNamespace.getSelectedItem();
+                if(selectedItem == null){
+                    fillServicesTable("");
+                }else{
+                    fillServicesTable(selectedItem.toString());
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        /*userInputArea.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if(e.getKeyCode() == KeyEvent.VK_ENTER && !e.isShiftDown()){
@@ -329,16 +359,105 @@ public class Dashboard  {
                     worker.execute();
                 }
             }
-        });
+        });*/
     }
 
+
+
+
     private void btnOpenChat(ActionEvent actionEvent) {
-        if (assistant==null && tools == null){
+        /*if (assistant==null && tools == null){
             tools = new Tools(client);
             assistant = AiFactory.createAssistant(tools);
-        }
+        }*/
         boolean isVisible = chatWindow.isVisible();
         chatWindow.setVisible(!isVisible);
+    }
+
+
+    ///################Services#################
+    ///
+
+    private void btnCreateService(ActionEvent actionEvent) {
+        try {
+            new CreateService(client);
+            fillServicesTable("");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void btnDeleteService(ActionEvent actionEvent) {
+        for (int row : tableServices.getSelectedRows()){
+            try {
+                client.getServiceManager().deleteService(tableServices.getValueAt(row,2).toString(),tableServices.getValueAt(row,0).toString());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        new InfoDialog("All Nodes Deleted!",IconType.SUCCESS);
+        try {
+            fillServicesTable("");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void fillServicesTable(String nameSpace){
+        CardLayout cl = (CardLayout) servicesLoading.getLayout();
+        loadingServices.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
+        cl.show(servicesLoading, "loading");
+        System.out.println(nameSpace);
+        SwingWorker<DefaultTableModel, Void> worker = new SwingWorker<>() {
+
+            @Override
+            protected DefaultTableModel doInBackground()  {
+                String[] columnNames = {"Name", "Type","Namespace"};
+                DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return false;
+                    }
+                };
+                try {
+                    V1ServiceList serviceList;
+                    if (nameSpace.isEmpty()) {
+                        serviceList = client.getServiceManager().getAllServices();
+                    } else {
+                        serviceList = client.getServiceManager().getAllServicesOnNamespace(nameSpace);
+                    }
+                    for (V1Service nm : serviceList.getItems()) {
+                        Object[] row = {
+                                nm.getMetadata() != null ? nm.getMetadata().getName() : null,
+                                nm.getSpec() != null ? nm.getSpec().getType() : null,
+                                nm.getMetadata().getNamespace(),
+                        };
+                        model.addRow(row);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                return model;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    DefaultTableModel model = get(); // retrieves result from doInBackground()
+                    tableServices.setModel(model);
+                    StyleFunctions.formatTables(tableServices);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // Handle or display the error in the UI
+                } finally {
+                    // setLoadingState(false);
+                    cl.show(servicesLoading, "table");
+                }
+            }
+        };
+
+        worker.execute();
     }
 
 
@@ -369,7 +488,7 @@ public class Dashboard  {
         }
     }
 
-    private void fillNodesTable() throws Exception {
+    private void fillNodesTable() {
         CardLayout cl = (CardLayout) nodesLoading.getLayout();
         loadingNodes.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
         cl.show(nodesLoading, "loading");
@@ -418,7 +537,7 @@ public class Dashboard  {
                 try {
                     DefaultTableModel model = get(); // retrieves result from doInBackground()
                     tableNodes.setModel(model);
-                    formatTables(tableNodes);
+                    StyleFunctions.formatTables(tableNodes);
                 } catch (Exception e) {
                     e.printStackTrace();
                     // Handle or display the error in the UI
@@ -454,7 +573,7 @@ public class Dashboard  {
     }
 
 
-    private void fillPodsTable(String namespace) throws Exception {
+    private void fillPodsTable(String namespace)  {
         CardLayout cl = (CardLayout) podsLoading.getLayout();
         loadingPods.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
         cl.show(podsLoading, "loading");
@@ -479,7 +598,20 @@ public class Dashboard  {
                 }
 
                 for (V1Pod pod : podList.getItems()) {
-                    Object[] row = getObjects(pod);
+                    String podName = Objects.requireNonNull(pod.getMetadata()).getName();
+                    String status = Objects.requireNonNull(pod.getStatus()).getPhase();
+                    String nameSpace = pod.getMetadata().getNamespace();
+                    String node = Objects.requireNonNull(pod.getSpec()).getNodeName();
+                    String ip = pod.getStatus().getPodIP();
+                    String date = Objects.requireNonNull(pod.getMetadata().getCreationTimestamp()).toString();
+                    Object[] row = new Object[]{
+                            podName,
+                            status,
+                            node,
+                            nameSpace,
+                            ip,
+                            date
+                    };
                     model.addRow(row);
                 }
 
@@ -491,7 +623,7 @@ public class Dashboard  {
                 try {
                     DefaultTableModel model = get(); // retrieves result from doInBackground()
                     tablePods.setModel(model);
-                    formatTables(tablePods);
+                    StyleFunctions.formatTables(tablePods);
                 } catch (Exception e) {
                     e.printStackTrace();
                     // Handle or display the error in the UI
@@ -506,31 +638,13 @@ public class Dashboard  {
 
     }
 
-    @NotNull
-    private static Object[] getObjects(V1Pod pod) {
-        String podName = Objects.requireNonNull(pod.getMetadata()).getName();
-        String status = Objects.requireNonNull(pod.getStatus()).getPhase();
-        String nameSpace = pod.getMetadata().getNamespace();
-        String node = Objects.requireNonNull(pod.getSpec()).getNodeName();
-        String ip = pod.getStatus().getPodIP();
-        String date = Objects.requireNonNull(pod.getMetadata().getCreationTimestamp()).toString();
-        return new Object[]{
-                podName,
-                status,
-                node,
-                nameSpace,
-                ip,
-                date
-        };
-    }
-
     ////################Deployments#################
     ///
 
     private void btnDeleteDeployment(ActionEvent actionEvent) {
 
-        String name = "";
-        String namespace = "";
+        String name ;
+        String namespace ;
 
         for (int row : tableDeployments.getSelectedRows()) {
             try {
@@ -581,7 +695,7 @@ public class Dashboard  {
                 try {
                     DefaultTableModel model = get(); // retrieves result from doInBackground()
                     tableDeployments.setModel(model);
-                    formatTables(tableDeployments);
+                    StyleFunctions.formatTables(tableDeployments);
                 } catch (Exception e) {
                     e.printStackTrace();
                     // Handle or display the error in the UI
@@ -610,7 +724,7 @@ public class Dashboard  {
         SwingWorker<DefaultTableModel, Void> worker = new SwingWorker<>() {
 
             @Override
-            protected DefaultTableModel doInBackground() throws Exception {
+            protected DefaultTableModel doInBackground() {
                 String[] columnNames = {"Name", "State","Creation Timestamp"};
                 DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
                     @Override
@@ -621,8 +735,8 @@ public class Dashboard  {
                 try {
                     for (V1Namespace nm : client.getNamespaceService().getAllNamespaces().getItems()) {
                         Object[] row = {
-                                nm.getMetadata().getName(),
-                                nm.getStatus().getPhase(),
+                                nm.getMetadata() != null ? nm.getMetadata().getName() : null,
+                                nm.getStatus() != null ? nm.getStatus().getPhase() : null,
                                 nm.getMetadata().getCreationTimestamp(),
                         };
                         model.addRow(row);
@@ -639,7 +753,7 @@ public class Dashboard  {
                 try {
                     DefaultTableModel model = get(); // retrieves result from doInBackground()
                     tableNamespaces.setModel(model);
-                    formatTables(tableNamespaces);
+                    StyleFunctions.formatTables(tableNamespaces);
                 } catch (Exception e) {
                     e.printStackTrace();
                     // Handle or display the error in the UI
@@ -653,7 +767,6 @@ public class Dashboard  {
         worker.execute();
 
     }
-
 
 
     ////################Dashboard#################
@@ -766,9 +879,30 @@ public class Dashboard  {
 
         }
 
+        try {
+            V1ServiceList serviceList = client.getServiceManager().getAllServices();
+            if (serviceList != null) {
+                serviceList.getItems().stream()
+                        .filter(service -> service.getMetadata() != null
+                                && service.getMetadata().getName() != null
+                                && service.getMetadata().getName().contains(searchText))
+                        .forEach(service -> {
+                            Object[] row = {
+                                    service.getMetadata().getName(),
+                                    "Service",
+                                    service.getMetadata().getNamespace(),
+                                    "NA"
+                            };
+                            model.addRow(row);
+                        });
+            }
+        } catch (Exception ignored) {
+
+        }
+
         if (model.getRowCount() > 0) {
             tableSearch.setModel(model);
-            formatTables(tableSearch);
+            StyleFunctions.formatTables(tableSearch);
             hideContentPanels();
             searchPanel.setVisible(true);
 
@@ -794,7 +928,7 @@ public class Dashboard  {
         listPodRamRank.setModel(listModel);
         listPodRamRank.setFont(new Font("JetBrains Mono Medium", Font.ITALIC, 14));
 
-        setBadgesInList(listPodRamRank);
+        StyleFunctions.setBadgesInList(listPodRamRank);
         iconCard4.setText("Biggest Memory consumers");
         iconCard4.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
 
@@ -815,7 +949,7 @@ public class Dashboard  {
         listPodCpuRank.setModel(listModel);
         listPodCpuRank.setFont(new Font("JetBrains Mono Medium", Font.ITALIC, 14));
 
-        setBadgesInList(listPodCpuRank);
+        StyleFunctions.setBadgesInList(listPodCpuRank);
         iconCard3.setText("Biggest CPU consumers");
         iconCard3.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
 
@@ -860,8 +994,9 @@ public class Dashboard  {
         }else if (value > 85.00) {
             valueCard1.setForeground(Color.RED);
         }
-        valueCard1.setText(String.format("%02.2f%%", value ));
-
+        String stringValue = String.format("%02.2f%%", value );
+        valueCard1.setText(stringValue);
+        ClusterDAO.getInstance().saveHistory("CPU",stringValue);
         Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/cpu.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard1.setIcon(new ImageIcon(logo));
         iconCard1.setText("Cluster CPU Usage");
@@ -914,7 +1049,7 @@ public class Dashboard  {
         }
         tableNodeStat.setModel(model);
         Font font = new Font("JetBrains Mono Medium", Font.BOLD, 16);
-        formatTables(tableNodeStat);
+        StyleFunctions.formatTables(tableNodeStat);
         titleTable.setText("Nodes Status");
         Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/nodesList.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         titleTable.setIcon(new ImageIcon(logo));
@@ -945,278 +1080,6 @@ public class Dashboard  {
         }
         comboBox.setSelectedIndex(-1);
         StyleFunctions.setComboBoxStyle(comboBox);
-    }
-
-    private void formatTables(JTable table) {
-        table.getTableHeader().setReorderingAllowed(false);
-
-        Color color1 = new Color(19,27,47);   // adjust to your liking
-        Color color2 = new Color(30,41,60);   // adjust to your liking
-        Color colorText = new Color(222, 222, 222);
-        Color highlight = new Color(56,124,245);
-        Font font = new Font("JetBrains Mono Medium", Font.BOLD, 16);
-        DefaultTableCellRenderer rowRenderer = new DefaultTableCellRenderer() {
-
-            private final JPanel badgePanel = new JPanel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    super.paintComponent(g);
-                    if (currentStatus == null) return;
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    int arc  = 12;
-                    int padX = 12;
-                    FontMetrics fm = g2.getFontMetrics(font);
-                    int textW  = fm.stringWidth(currentStatus);
-                    int badgeW = textW + padX * 2;
-                    paintBadge(g2, currentBg, currentText, currentBorder, currentStatus, font, fm, arc, padX, badgeW, getWidth(), getHeight());
-                }
-            };
-
-            private String currentStatus;
-            private Color currentBg, currentText, currentBorder;
-            @Override
-            public Component getTableCellRendererComponent(
-                    JTable table, Object value, boolean isSelected,
-                    boolean hasFocus, int row, int column) {
-
-                if (value == null) value = "N/A";
-
-                JLabel label = (JLabel) super.getTableCellRendererComponent(
-                        table, value, isSelected, hasFocus, row, column);
-
-                Color rowBg;
-
-                if (isSelected) {
-                    rowBg = highlight;
-                } else {
-                    rowBg = (row % 2 == 0) ? color2 : color1;
-                }
-                label.setBackground(rowBg);
-                label.setForeground(colorText);
-                label.setOpaque(true);
-
-                if (column == 1) {
-                    // Return a custom badge panel instead of a plain label
-                    currentStatus = value.toString();
-                    Color[] colors = getBadgeColors(currentStatus);
-                    currentBg     = colors[0];
-                    currentText   = colors[1];
-                    currentBorder = colors[2];
-                    badgePanel.setBackground(rowBg);
-                    badgePanel.setOpaque(true);
-                    return badgePanel;
-
-                } else {
-                    label.setText(
-                            "<html><div style='width:100%; text-align:center; color:white;'>"
-                                    + value + "</div></html>"
-                    );
-                    label.setHorizontalAlignment(SwingConstants.CENTER);
-                    label.setVerticalAlignment(SwingConstants.CENTER);
-                    label.setFont(font);
-                    label.setForeground(colorText);
-                    label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-                    return label;
-                }
-            }
-
-        };
-
-        final int[] hoveredColumn = getInts(table);
-
-
-        DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(
-                    JTable table, Object value, boolean isSelected,
-                    boolean hasFocus, int row, int column) {
-
-                JLabel label = (JLabel) super.getTableCellRendererComponent(
-                        table, value, isSelected, hasFocus, row, column);
-
-                Color hoverColor = new Color(45, 60, 90);
-
-                if (column == hoveredColumn[0]) {
-                    label.setBackground(hoverColor);
-                } else {
-                    label.setBackground(color1);
-                }
-                label.setForeground(colorText);
-                label.setOpaque(true);
-                label.setHorizontalAlignment(SwingConstants.CENTER);
-                label.setFont(font);
-                label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
-
-                return label;
-            }
-        };
-
-        // This locks the header background regardless of hover/press states
-        table.getTableHeader().setDefaultRenderer(headerRenderer);
-        table.getTableHeader().setBackground(color1);
-        table.getTableHeader().setForeground(colorText);
-        table.getTableHeader().setPreferredSize(new Dimension(0, 35));
-
-        table.getTableHeader().setUI(new BasicTableHeaderUI() {
-            @Override
-            public void paint(Graphics g, JComponent c) {
-                g.setColor(color1);
-                g.fillRect(0, 0, c.getWidth(), c.getHeight());
-                super.paint(g, c);
-            }
-        });
-
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(rowRenderer);
-            table.getTableHeader().getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
-        }
-
-        TableRowSorter<TableModel> sorter =
-                new TableRowSorter<>(table.getModel());
-
-        table.setRowSorter(sorter);
-        table.getTableHeader().setCursor(
-                Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        );
-
-
-        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        table.setSelectionBackground(highlight);
-        table.setRowHeight(35);
-        table.setVisible(true);
-    }
-
-    @NotNull
-    private static int[] getInts(JTable table) {
-        final int[] hoveredColumn = {-1};
-
-        JTableHeader header = table.getTableHeader();
-
-        header.addMouseMotionListener(new MouseMotionAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                int col = header.columnAtPoint(e.getPoint());
-
-                if (hoveredColumn[0] != col) {
-                    hoveredColumn[0] = col;
-                    header.repaint();
-                }
-            }
-        });
-
-        header.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseExited(MouseEvent e) {
-                hoveredColumn[0] = -1;
-                header.repaint();
-            }
-        });
-        return hoveredColumn;
-    }
-
-    private void setBadgesInList(JList list) {
-        Color color1 = new Color(19,27,47);   // adjust to your liking
-        Color color2 = new Color(30,41,60);   // adjust to your liking
-        Color colorText = new Color(222,222,222);
-        list.setCellRenderer(new ListCellRenderer<String>() {
-            @Override
-            public Component getListCellRendererComponent(
-                    JList<? extends String> list, String value,
-                    int index, boolean isSelected, boolean cellHasFocus) {
-
-                JPanel row = new JPanel(new BorderLayout(10, 0));
-                row.setOpaque(true);
-                row.setBackground((index % 2 == 0) ? color2 : color1);
-                row.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-
-                // Badge panel
-                int badgeNumber = index + 1;
-                JPanel badge = new JPanel() {
-                    @Override
-                    protected void paintComponent(Graphics g) {
-                        super.paintComponent(g);
-                        Graphics2D g2 = (Graphics2D) g.create();
-                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                        // Badge color changes per rank
-                        Color badgeBg;
-                        Color badgeText;
-                        Color badgeBorder;
-                        switch (badgeNumber) {
-                            case 1 -> { badgeBg = new Color(120, 80, 0);  badgeBorder = new Color(255, 180, 0);  badgeText = new Color(255, 210, 0);  } // gold
-                            case 2 -> { badgeBg = new Color(60, 70, 80);  badgeBorder = new Color(160, 180, 200); badgeText = new Color(200, 215, 230); } // silver
-                            case 3 -> { badgeBg = new Color(80, 40, 10);  badgeBorder = new Color(180, 100, 40);  badgeText = new Color(210, 130, 60);  } // bronze
-                            default -> { badgeBg = new Color(40, 40, 60); badgeBorder = new Color(100, 100, 140); badgeText = new Color(180, 180, 220); } // default
-                        }
-
-                        String text = "#" + badgeNumber;
-                        Font badgeFont = new Font("JetBrains Mono Medium", Font.BOLD, 13);
-                        FontMetrics fm = g2.getFontMetrics(badgeFont);
-                        int arc = 10;
-                        int padX = 8;
-                        int badgeW = fm.stringWidth(text) + padX * 2;
-                        paintBadge(g2, badgeBg, badgeText, badgeBorder, text, badgeFont, fm, arc, padX, badgeW, getWidth(), getHeight());
-                    }
-
-
-                    @Override
-                    public Dimension getPreferredSize() {
-                        return new Dimension(45, 30);
-                    }
-                };
-
-                badge.setOpaque(false);
-
-                // Pod name label
-                JLabel nameLabel = new JLabel(value);
-                nameLabel.setFont(new Font("JetBrains Mono Medium", Font.ITALIC, 14));
-                nameLabel.setForeground(colorText);
-
-                row.add(badge, BorderLayout.WEST);
-                row.add(nameLabel, BorderLayout.CENTER);
-
-                return row;
-            }
-        });
-    }
-
-    private Color[] getBadgeColors(String type) {
-        return switch (type.toLowerCase()) {
-            case "node"       -> new Color[]{new Color(20, 60, 100),  new Color(80, 160, 255), new Color(40, 100, 180)};
-            case "deployment" -> new Color[]{new Color(80, 40, 120),  new Color(180, 80, 255), new Color(120, 50, 180)};
-            case "pod"        -> new Color[]{new Color(20, 80, 60),   new Color(0, 220, 130),  new Color(0, 160, 90)};
-            case "namespace"  -> new Color[]{new Color(100, 60, 0),   new Color(255, 180, 0),  new Color(180, 120, 0)};
-            case "up", "running", "active" -> new Color[]{new Color(0, 80, 40),    new Color(0, 255, 100),  new Color(0, 200, 80)};
-            case "down"       -> new Color[]{new Color(80, 20, 20),   new Color(255, 80, 80),  new Color(200, 50, 50)};
-            case "pending"   -> new Color[]{new Color(90, 70, 20), new Color(255, 210, 80),new Color(180, 140, 40)};
-            case "succeeded" -> new Color[]{new Color(20, 60, 120),new Color(80, 180, 255),new Color(40, 120, 200)};
-            case "failed"    -> new Color[]{new Color(100, 20, 20),new Color(255, 60, 60),new Color(180, 30, 30)};
-            case "unknown"   -> new Color[]{new Color(70, 70, 70),new Color(180, 180, 180),new Color(120, 120, 120)};
-            default           -> new Color[]{new Color(50, 50, 50),   new Color(180, 180, 180),new Color(100, 100, 100)};
-        };
-        // [0] = background, [1] = text, [2] = border
-    }
-
-    private void paintBadge(Graphics2D g2, Color badgeBg, Color badgeText, Color badgeBorder, String text, Font badgeFont, FontMetrics fm, int arc, int padX, int badgeW, int width, int height) {
-        int badgeH = 22;
-        int x = (width - badgeW) / 2;
-        int y = (height - badgeH) / 2;
-
-        g2.setColor(badgeBg);
-        g2.fillRoundRect(x, y, badgeW, badgeH, arc, arc);
-
-        g2.setColor(badgeBorder);
-        g2.setStroke(new BasicStroke(1.2f));
-        g2.drawRoundRect(x, y, badgeW, badgeH, arc, arc);
-
-        g2.setColor(badgeText);
-        g2.setFont(badgeFont);
-        int textX = x + padX;
-        int textY = y + (badgeH - fm.getHeight()) / 2 + fm.getAscent();
-        g2.drawString(text, textX, textY);
-
-        g2.dispose();
     }
 
     private void setStyle() {
@@ -1257,7 +1120,8 @@ public class Dashboard  {
 
 
         buttons = new AbstractButton[]{
-                addNodeButton,deleteNodeButton,
+                addNodeButton,deleteNodeButton, //Nodes
+                createServiceButton,deleteServiceButton,//Services
                 createDeploymentButton,deleteDeploymentButton, //Deployment Buttons
                 addPodButton,deletePodButton, //Pods Buttons
                 buttonChatBot
@@ -1281,8 +1145,8 @@ public class Dashboard  {
         buttonChatBot.setBackground(new Color(30,41,60));
         buttonChatBot.setBorderPainted(false);
 
-        StyleFunctions.setTextFieldStyle(searchBar);
-        StyleFunctions.setTextAreaStyle(userInputArea);
+        StyleFunctions.setTextFieldStyle(searchBar,false);
+        StyleFunctions.setTextAreaStyle(userInputArea,true);
         userInputArea.setBackground(new Color(30,41,60));
 
         setChatStyles();
@@ -1432,6 +1296,8 @@ public class Dashboard  {
         DefaultCategoryDataset dataset =
                 new DefaultCategoryDataset();
 
+
+
         dataset.addValue(20, "CPU", "10:00");
         dataset.addValue(35, "CPU", "10:05");
         dataset.addValue(50, "CPU", "10:10");
@@ -1451,15 +1317,15 @@ public class Dashboard  {
 
         userStyle = chatBox.addStyle("UserStyle", null);
         StyleConstants.setAlignment(userStyle, StyleConstants.ALIGN_RIGHT);
-        StyleConstants.setForeground(userStyle, Color.WHITE);
-        StyleConstants.setBackground(userStyle, new Color(0, 120, 215));
+        StyleConstants.setForeground(userStyle, new Color(222,222,222));
+        StyleConstants.setBackground(userStyle, new Color(0, 120, 215,94));
         StyleConstants.setFontFamily(userStyle, "Consolas");
         StyleConstants.setFontSize(userStyle, 14);
 
         aiStyle = chatBox.addStyle("AIStyle", null);
         StyleConstants.setAlignment(aiStyle, StyleConstants.ALIGN_LEFT);
-        StyleConstants.setForeground(aiStyle, Color.WHITE);
-        StyleConstants.setBackground(aiStyle, new Color(60, 60, 60));
+        StyleConstants.setForeground(aiStyle, new Color(222,222,222));
+        StyleConstants.setBackground(aiStyle, new Color(60, 60, 60,94));
         StyleConstants.setFontFamily(aiStyle, "Consolas");
         StyleConstants.setFontSize(aiStyle, 14);
     }

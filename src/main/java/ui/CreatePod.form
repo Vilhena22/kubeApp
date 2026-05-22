@@ -169,7 +169,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <font name="JetBrains Mono Medium" size="16" style="1"/>
+                  <font name="JetBrains Mono Medium" size="16"/>
                   <text value="Pod Name"/>
                 </properties>
               </component>
@@ -181,7 +181,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <font name="JetBrains Mono Medium" size="16" style="1"/>
+                  <font name="JetBrains Mono Medium" size="16"/>
                   <text value="Namespace"/>
                 </properties>
               </component>
@@ -194,7 +194,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <font name="JetBrains Mono Medium" size="16" style="1"/>
+                  <font name="JetBrains Mono Medium" size="16"/>
                   <foreground color="-2171170"/>
                   <text value="Description"/>
                 </properties>
@@ -265,7 +265,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <font name="JetBrains Mono Medium" size="16" style="1"/>
+                  <font name="JetBrains Mono Medium" size="16"/>
                   <foreground color="-2171170"/>
                   <text value="Container Name"/>
                 </properties>
@@ -279,7 +279,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <font name="JetBrains Mono Medium" size="16" style="1"/>
+                  <font name="JetBrains Mono Medium" size="16"/>
                   <foreground color="-2171170"/>
                   <text value="Image"/>
                 </properties>
@@ -293,7 +293,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <font name="JetBrains Mono Medium" size="16" style="1"/>
+                  <font name="JetBrains Mono Medium" size="16"/>
                   <foreground color="-2171170"/>
                   <text value="Pull Policie"/>
                 </properties>
@@ -307,7 +307,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <font name="JetBrains Mono Medium" size="16" style="1"/>
+                  <font name="JetBrains Mono Medium" size="16"/>
                   <foreground color="-2171170"/>
                   <text value="Restart Policie"/>
                 </properties>

@@ -74,5 +74,10 @@ public class KubernetesClient {
         return clusterService;
     }
 
+    public ServiceManager getServiceManager() {
+        if (serviceManager == null) serviceManager = new ServiceManager(coreV1Api);
+        return serviceManager;
+    }
+
 
 }

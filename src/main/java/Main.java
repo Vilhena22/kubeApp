@@ -1,15 +1,13 @@
 
 import Handlers.AppSetup;
+import Handlers.ClusterDAO;
 import ai.AiFactory;
 import ai.Assistant;
 import api.KubernetesClient;
 import com.formdev.flatlaf.FlatDarkLaf;
 import model.IconType;
-import ui.CreateNode;
-import ui.CreatePod;
-import ui.Dashboard;
+import ui.*;
 import io.kubernetes.client.openapi.models.*;
-import ui.InfoDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,6 +19,8 @@ public class Main {
     public static void main(String[] args) {
         try {
             FlatDarkLaf.setup();
+            ClusterDAO dao = new ClusterDAO();
+            dao.createTable();
             JFrame frame = new JFrame("Dashboard");
             Dashboard dashboard = new Dashboard();
             frame.setContentPane(dashboard.getPanel());
@@ -30,17 +30,19 @@ public class Main {
             frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
             frame.setVisible(true);
 
-            //client.getNamespaceService().getAllNamespaces().getItems().forEach(System.out::println);
 
-           /* KubernetesClient client = new KubernetesClient(
+
+            /*KubernetesClient client = new KubernetesClient(
                     AppSetup.getK3sHost(),
                     AppSetup.getK3sToken()
             );*/
+            //client.getPodService().getAllPodsOnNamespace("").getItems().forEach(System.out::println);
 
+            //client.getServiceManager().getAllServicesOnNamespace("").getItems().forEach(System.out::println);
             //new CreatePod(client);
 
             //new CreateNode(client);
-
+            //new CreateService(client);
 
             //new InfoDialog("teste",IconType.INFO);
 
