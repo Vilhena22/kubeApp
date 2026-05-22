@@ -1,7 +1,12 @@
 package Handlers;
 
+import model.History;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClusterDAO {
     private static ClusterDAO instance;
@@ -52,5 +57,27 @@ public class ClusterDAO {
 
             stmt.executeUpdate();
         }
+    }
+
+    public List<History> getLastHourHistory() throws Exception {
+        List<History> list = new ArrayList<>();
+
+        try (Connection conn = Database.connect()) {
+            ResultSet rs = conn.createStatement()
+                    .executeQuery("""
+                            SELECT *
+                            FROM history
+                            WHERE timestamp >= datetime('now', '-1 hours');""");
+
+            while (rs.next()) {
+                History entry = new History();
+                entry.type = rs.getString("type");
+                entry.time = rs.getString("timestamp");
+                entry.value = rs.getString("value");
+
+                list.add(entry);
+            }
+        }
+        return list;
     }
 }

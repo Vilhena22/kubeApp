@@ -11,6 +11,7 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.*;
+import model.History;
 import model.IconType;
 import model.Result;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +33,12 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Dashboard  {
     private JPanel mainPanel;
@@ -124,14 +129,8 @@ public class Dashboard  {
             System.out.println("Error Connecting: " + e.getMessage());
         }
 
-
-        getCPUPercentage();
-        getRAMPercentage();
-        getNodeStatusTable();
-        getPodCpuRank();
-        getPodRamRank();
-        getClusterSpecs();
         buildGraphic();
+        refreshDashboard();
         navbarButtonEffect(dashboardButton);
 
         deploymentsButton.addActionListener(this::btnDeleteDeployment);
@@ -989,14 +988,7 @@ public class Dashboard  {
 
     private void getCPUPercentage() throws Exception {
         double value = client.getClusterService().getCPUPercentage();
-        if (value > 75.00 && value < 85.00) {
-            valueCard1.setForeground(Color.ORANGE);
-        }else if (value > 85.00) {
-            valueCard1.setForeground(Color.RED);
-        }
-        String stringValue = String.format("%02.2f%%", value );
-        valueCard1.setText(stringValue);
-        ClusterDAO.getInstance().saveHistory("CPU",stringValue);
+        ClusterDAO.getInstance().saveHistory("CPU",setValueColor(value, valueCard1));
         Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/cpu.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard1.setIcon(new ImageIcon(logo));
         iconCard1.setText("Cluster CPU Usage");
@@ -1007,14 +999,7 @@ public class Dashboard  {
 
     private void getRAMPercentage() throws Exception {
         double value = client.getClusterService().getRamPercentage();
-        System.out.println(value);
-        if (value > 75.00 && value < 85.00) {
-            valueCard2.setForeground(Color.ORANGE);
-        }else if (value > 85.00) {
-            valueCard2.setForeground(Color.RED);
-        }
-        valueCard2.setText(String.format("%02.2f%%", value ));
-
+        ClusterDAO.getInstance().saveHistory("RAM",setValueColor(value, valueCard2));
         Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/ram.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard2.setIcon(new ImageIcon(logo));
         iconCard2.setText("Cluster Memory Usage");
@@ -1059,6 +1044,50 @@ public class Dashboard  {
 
     ////################Utilities Functions#################
     ///
+
+    private void refreshDashboard() {
+
+        ScheduledExecutorService scheduler =
+                Executors.newScheduledThreadPool(1);
+
+        scheduler.scheduleAtFixedRate(() -> {
+
+            try {
+
+                // Backend/data operations
+                getCPUPercentage();
+                getRAMPercentage();
+                getNodeStatusTable();
+                getPodCpuRank();
+                getPodRamRank();
+                getClusterSpecs();
+
+                // UI updates
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        buildGraphic();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }, 0, 5, TimeUnit.MINUTES);
+    }
+
+    private String setValueColor(double value, JLabel valueCard1) {
+        if (value > 75.00 && value < 85.00) {
+            valueCard1.setForeground(Color.ORANGE);
+        }else if (value > 85.00) {
+            valueCard1.setForeground(Color.RED);
+        }
+        String stringValue = String.format("%02.2f", value );
+        valueCard1.setText(stringValue+"%");
+        return stringValue;
+    }
 
     public JPanel getPanel() {
         return mainPanel;
@@ -1192,7 +1221,7 @@ public class Dashboard  {
         ));
     }
 
-    private void buildGraphic(){
+    private void buildGraphic() throws Exception {
         DefaultCategoryDataset data = buildDataset();
 
 
@@ -1292,24 +1321,14 @@ public class Dashboard  {
     }
 
     @NotNull
-    private static DefaultCategoryDataset buildDataset() {
+    private static DefaultCategoryDataset buildDataset() throws Exception {
         DefaultCategoryDataset dataset =
                 new DefaultCategoryDataset();
 
-
-
-        dataset.addValue(20, "CPU", "10:00");
-        dataset.addValue(35, "CPU", "10:05");
-        dataset.addValue(50, "CPU", "10:10");
-        dataset.addValue(65, "CPU", "10:15");
-        dataset.addValue(40, "CPU", "10:20");
-
-
-        dataset.addValue(50, "RAM", "11:00");
-        dataset.addValue(75, "RAM", "11:05");
-        dataset.addValue(90, "RAM", "11:10");
-        dataset.addValue(45, "RAM", "11:15");
-        dataset.addValue(40, "RAM", "11:20");
+        List<History> historic = ClusterDAO.getInstance().getLastHourHistory();
+        for (History history : historic) {
+            dataset.addValue(Double.parseDouble(history.value.replace(",", ".")),history.type,history.time);
+        }
         return dataset;
     }
 
