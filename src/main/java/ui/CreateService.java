@@ -89,13 +89,7 @@ public class CreateService extends JDialog {
 
 
 
-        buttonOK.addActionListener(e -> {
-            try {
-                onOK();
-            } catch (ApiException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
+        buttonOK.addActionListener(e -> onOK());
 
         nextButton.addActionListener(e -> onNext());
 
@@ -139,6 +133,9 @@ public class CreateService extends JDialog {
                 case 1:
                     cl.show(cardPanel, "nodeCard");
                     break;
+                case 3:
+                    cl.show(cardPanel, "externalCard");
+                    break;
             }
             selector = new HashMap<>();
             try {
@@ -167,7 +164,7 @@ public class CreateService extends JDialog {
 
     }
 
-    private void onOK() throws ApiException {
+    private void onOK()  {
         V1ServicePort servicePort = null;
         V1ServiceSpec spec=null;
         switch (comboBoxServiceType.getSelectedIndex()) {
@@ -199,14 +196,27 @@ public class CreateService extends JDialog {
             newService = new V1Service().metadata(new V1ObjectMeta().name(textFieldServiceName.getText()))
                     .spec(spec);
         }
-        
-        V1Service service = client.getServiceManager().createService(nameSpace,newService);
+
+        V1Service service = null;
+        try {
+            service = client.getServiceManager().createService(nameSpace,newService);
+        } catch (ApiException e) {
+            String error = e.getResponseBody();
+            if (error.contains("metadata.name")) {
+                new InfoDialog("<html>Invalid service name.<br>" +
+                        "Use lowercase letters, numbers and '-'.</html>", IconType.WARNING);
+            }else {
+                new InfoDialog("Something went wrong!", IconType.ERROR);
+
+            }
+
+        }
         if (service != null){
             new InfoDialog("Service Created!", IconType.SUCCESS);
             dispose();
-        }else {
+        }/*else {
             new InfoDialog("Create Service Failed", IconType.ERROR);
-        }
+        }*/
 
     }
 

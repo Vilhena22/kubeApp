@@ -305,7 +305,7 @@ public class Dashboard  {
             }
         });
 
-        /*userInputArea.addKeyListener(new KeyAdapter() {
+        userInputArea.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if(e.getKeyCode() == KeyEvent.VK_ENTER && !e.isShiftDown()){
@@ -358,17 +358,17 @@ public class Dashboard  {
                     worker.execute();
                 }
             }
-        });*/
+        });
     }
 
 
 
 
     private void btnOpenChat(ActionEvent actionEvent) {
-        /*if (assistant==null && tools == null){
+        if (assistant==null && tools == null){
             tools = new Tools(client);
             assistant = AiFactory.createAssistant(tools);
-        }*/
+        }
         boolean isVisible = chatWindow.isVisible();
         chatWindow.setVisible(!isVisible);
     }

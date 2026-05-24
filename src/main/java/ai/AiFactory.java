@@ -11,7 +11,7 @@ public class AiFactory {
         var model =
                 OllamaChatModel.builder()
                         .baseUrl("http://localhost:11434")
-                        .modelName("qwen2.5:7b")
+                        .modelName("qwen2.5:3b")
                         .build();
 
         return AiServices.builder(Assistant.class)
