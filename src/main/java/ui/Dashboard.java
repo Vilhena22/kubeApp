@@ -112,6 +112,8 @@ public class Dashboard  {
     private JComboBox comboServiceNamespace;
     private JButton deleteServiceButton;
     private JButton createServiceButton;
+    private JButton createButton;
+    private JButton deleteButton;
     private KubernetesClient client;
     private Assistant assistant = null;
     private Tools tools = null;
@@ -133,7 +135,11 @@ public class Dashboard  {
         refreshDashboard();
         navbarButtonEffect(dashboardButton);
 
-        deploymentsButton.addActionListener(this::btnDeleteDeployment);
+        //Deployment
+        //createDeploymentButton.addActionListener(this::btnCreateDeployment);
+        //deleteDeploymentButton.addActionListener(this::btnDeleteDeployment);
+
+        //Node
         addNodeButton.addActionListener(this::btnAddNode);
         deleteNodeButton.addActionListener(this::btnDeleteNode);
         buttonChatBot.addActionListener(this::btnOpenChat);
@@ -202,12 +208,18 @@ public class Dashboard  {
             }
             navbarButtonEffect(deploymentsButton);
             hideContentPanels();
-            deploymentsPanel.setVisible(true);
             try {
-                fillDeploymentTable();
+                fillFilterComboboxByNamespaces(comboBoxDeployment);
+                Object selectedItem = comboBoxDeployment.getSelectedItem();
+                if(comboBoxDeployment.getSelectedIndex() == -1){
+                    fillDeploymentTable("");
+                }else{
+                    fillDeploymentTable(comboBoxDeployment.getSelectedItem().toString());
+                }
             } catch (ApiException ex) {
                 throw new RuntimeException(ex);
             }
+            deploymentsPanel.setVisible(true);
         });
 
         servicesButton.addActionListener(e -> {
@@ -359,10 +371,22 @@ public class Dashboard  {
                 }
             }
         });
+        comboBoxDeployment.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                try {
+                    fillFilterComboboxByNamespaces(comboBoxDeployment);
+                    if (comboBoxDeployment.getSelectedIndex() == -1){
+                        fillDeploymentTable("");
+                    }else {
+                        fillDeploymentTable(comboBoxDeployment.getSelectedItem().toString());
+                    }
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
     }
-
-
-
 
     private void btnOpenChat(ActionEvent actionEvent) {
         if (assistant==null && tools == null){
@@ -656,7 +680,7 @@ public class Dashboard  {
         }
     }
 
-    private void fillDeploymentTable() throws ApiException {
+    private void fillDeploymentTable(String namespace) throws ApiException {
 
         CardLayout cl = (CardLayout) deploymentLoading.getLayout();
         loadingDeployments.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
@@ -666,7 +690,6 @@ public class Dashboard  {
 
             @Override
             protected DefaultTableModel doInBackground() throws Exception {
-                fillFilterComboboxByNamespaces(comboBoxDeployment);
                 String[] columNames = {"Name", "Namespace", "Resource Version"};
                 DefaultTableModel model = new DefaultTableModel(columNames, 0) {
                     @Override
@@ -674,13 +697,21 @@ public class Dashboard  {
                         return false;
                     }
                 };
+
+                V1DeploymentList deployment;
+                if (namespace.isEmpty()) {
+                    deployment = client.getDeploymentService().getAllDeployments();
+                } else {
+                    deployment = client.getDeploymentService().getDeploymentsByNamespace(namespace);
+                }
                 try {
-                    for (V1Deployment dep : client.getDeploymentService().getAllDeployments().getItems()) {
+                    for (V1Deployment dep : deployment.getItems()) {
                         Object[] row = {
                                 dep.getMetadata() != null ? dep.getMetadata().getName() : null,
                                 dep.getMetadata() != null ? dep.getMetadata().getNamespace() : null,
                                 dep.getMetadata() != null ? dep.getMetadata().getResourceVersion() : null
                         };
+                        model.addRow(row);
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -743,7 +774,6 @@ public class Dashboard  {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-
                 return model;
             }
 
@@ -1153,7 +1183,7 @@ public class Dashboard  {
                 createServiceButton,deleteServiceButton,//Services
                 createDeploymentButton,deleteDeploymentButton, //Deployment Buttons
                 addPodButton,deletePodButton, //Pods Buttons
-                buttonChatBot
+                buttonChatBot,
         };
 
         for (AbstractButton btn : buttons) {

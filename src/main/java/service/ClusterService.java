@@ -10,6 +10,8 @@ import model.PrometheusResponse;
 import model.Result;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +43,7 @@ public class ClusterService {
     }
 
     public double getCPUPercentage() throws Exception {
-        String json = HttpSendRequest.sendRequestGet("sum(rate(container_cpu_usage_seconds_total[5m]))/sum(machine_cpu_cores)");
+        String json = HttpSendRequest.sendRequestGet("100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)");
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         Result result = response.data.getResult().getLast();
