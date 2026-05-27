@@ -723,6 +723,7 @@
                 </constraints>
                 <properties>
                   <autoscrolls value="true"/>
+                  <background color="-2171170"/>
                   <requestFocusEnabled value="true"/>
                 </properties>
               </component>

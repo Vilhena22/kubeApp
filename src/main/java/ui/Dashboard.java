@@ -23,6 +23,7 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
+import service.DeploymentService;
 
 import javax.swing.*;
 
@@ -39,6 +40,8 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static ui.StyleFunctions.setComboBoxStyle;
 
 public class Dashboard  {
     private JPanel mainPanel;
@@ -136,8 +139,8 @@ public class Dashboard  {
         navbarButtonEffect(dashboardButton);
 
         //Deployment
-        //createDeploymentButton.addActionListener(this::btnCreateDeployment);
-        //deleteDeploymentButton.addActionListener(this::btnDeleteDeployment);
+        createDeploymentButton.addActionListener(this::btnCreateDeployment);
+        deleteDeploymentButton.addActionListener(this::btnDeleteDeployment);
 
         //Node
         addNodeButton.addActionListener(this::btnAddNode);
@@ -208,14 +211,17 @@ public class Dashboard  {
             }
             navbarButtonEffect(deploymentsButton);
             hideContentPanels();
+            comboBoxDeployment.removeAllItems();
+            comboBoxDeployment.addItem("All");
             try {
-                fillFilterComboboxByNamespaces(comboBoxDeployment);
-                Object selectedItem = comboBoxDeployment.getSelectedItem();
-                if(comboBoxDeployment.getSelectedIndex() == -1){
-                    fillDeploymentTable("");
-                }else{
-                    fillDeploymentTable(comboBoxDeployment.getSelectedItem().toString());
+                for (V1Namespace nm : client.getNamespaceService().getAllNamespaces().getItems()){
+                    comboBoxDeployment.addItem(nm.getMetadata().getName());
                 }
+            } catch (ApiException ex) {
+                throw new RuntimeException(ex);
+            }
+            try {
+                fillDeploymentTable("All");
             } catch (ApiException ex) {
                 throw new RuntimeException(ex);
             }
@@ -289,7 +295,6 @@ public class Dashboard  {
                 throw new RuntimeException(e);
             }
         });
-
 
         comboBoxFilterPodByNamespace.addItemListener(e -> {
             try {
@@ -374,11 +379,13 @@ public class Dashboard  {
         comboBoxDeployment.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
+                setComboBoxStyle(comboBoxDeployment);
+                if (e.getStateChange() != ItemEvent.SELECTED) return; // só reage ao SELECTED
+
                 try {
-                    fillFilterComboboxByNamespaces(comboBoxDeployment);
-                    if (comboBoxDeployment.getSelectedIndex() == -1){
+                    if (comboBoxDeployment.getSelectedIndex() == -1) {
                         fillDeploymentTable("");
-                    }else {
+                    } else {
                         fillDeploymentTable(comboBoxDeployment.getSelectedItem().toString());
                     }
                 } catch (Exception ex) {
@@ -387,6 +394,21 @@ public class Dashboard  {
             }
         });
     }
+
+    private void btnCreateDeployment(ActionEvent actionEvent) {
+        CreateDeployment newDep = new CreateDeployment(client);
+        newDep.pack();
+        newDep.setSize(300, 250);
+        newDep.setLocationRelativeTo(null);
+        newDep.setResizable(false);
+        newDep.setVisible(true);
+        try {
+            fillDeploymentTable("All");
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     private void btnOpenChat(ActionEvent actionEvent) {
         if (assistant==null && tools == null){
@@ -678,14 +700,17 @@ public class Dashboard  {
                 throw new RuntimeException(e);
             }
         }
+        try {
+            fillDeploymentTable("All");
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void fillDeploymentTable(String namespace) throws ApiException {
-
         CardLayout cl = (CardLayout) deploymentLoading.getLayout();
         loadingDeployments.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
         cl.show(deploymentLoading, "loading");
-
         SwingWorker<DefaultTableModel, Void> worker = new SwingWorker<>() {
 
             @Override
@@ -699,7 +724,7 @@ public class Dashboard  {
                 };
 
                 V1DeploymentList deployment;
-                if (namespace.isEmpty()) {
+                if (namespace.compareTo("All") == 0) {
                     deployment = client.getDeploymentService().getAllDeployments();
                 } else {
                     deployment = client.getDeploymentService().getDeploymentsByNamespace(namespace);
@@ -737,8 +762,6 @@ public class Dashboard  {
         };
 
         worker.execute();
-
-
     }
 
     ////################Namespaces#################
@@ -1138,7 +1161,7 @@ public class Dashboard  {
             }
         }
         comboBox.setSelectedIndex(-1);
-        StyleFunctions.setComboBoxStyle(comboBox);
+        setComboBoxStyle(comboBox);
     }
 
     private void setStyle() {
