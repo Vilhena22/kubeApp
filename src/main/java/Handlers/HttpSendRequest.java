@@ -3,6 +3,7 @@ package Handlers;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -13,13 +14,11 @@ public class HttpSendRequest {
         String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
 
         URL urlObj = new URL(AppSetup.getPrometheusUrl() + encoded);
-        System.out.println(urlObj);
         HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection();
-        System.out.println(AppSetup.getK3sHost());
+
         conn.setRequestProperty("Authorization", "Bearer " + AppSetup.getK3sToken());
-
-
         conn.setRequestMethod("GET");
+
         if (conn.getResponseCode() != 200) {
             return conn.getResponseMessage();
         }
