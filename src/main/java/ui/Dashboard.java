@@ -211,16 +211,9 @@ public class Dashboard  {
             }
             navbarButtonEffect(deploymentsButton);
             hideContentPanels();
-            comboBoxDeployment.removeAllItems();
-            comboBoxDeployment.addItem("All");
+
             try {
-                for (V1Namespace nm : client.getNamespaceService().getAllNamespaces().getItems()){
-                    comboBoxDeployment.addItem(nm.getMetadata().getName());
-                }
-            } catch (ApiException ex) {
-                throw new RuntimeException(ex);
-            }
-            try {
+                fillFilterComboboxByNamespaces(comboBoxDeployment);
                 fillDeploymentTable("All");
             } catch (ApiException ex) {
                 throw new RuntimeException(ex);
@@ -741,7 +734,6 @@ public class Dashboard  {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-
                 return model;
             }
 
@@ -1155,12 +1147,13 @@ public class Dashboard  {
 
     private void fillFilterComboboxByNamespaces(JComboBox comboBox) throws ApiException {
         comboBox.removeAllItems();
+        comboBox.addItem("All");
         for (V1Namespace namespace : client.getNamespaceService().getAllNamespaces().getItems()){
             if (namespace.getMetadata() != null) {
                 comboBox.addItem(namespace.getMetadata().getName());
             }
         }
-        comboBox.setSelectedIndex(-1);
+        comboBox.setSelectedIndex(0);
         setComboBoxStyle(comboBox);
     }
 
