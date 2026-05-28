@@ -25,6 +25,14 @@ public class CreateDeployment extends JDialog {
         getRootPane().setDefaultButton(buttonCreate);
         this.client = client;
 
+        StyleFunctions.hoverButtonEffect(buttonCreate);
+        StyleFunctions.hoverButtonEffect(buttonCancel);
+        StyleFunctions.setTextFieldStyle(namespace, true);
+        StyleFunctions.setTextFieldStyle(labelApp, true);
+        StyleFunctions.setTextFieldStyle(containerImage, true);
+        StyleFunctions.setTextFieldStyle(containerName, true);
+        StyleFunctions.setTextFieldStyle(depName, true);
+
         buttonCreate.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onOK();

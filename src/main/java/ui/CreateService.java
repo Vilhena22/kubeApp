@@ -207,9 +207,7 @@ public class CreateService extends JDialog {
                         "Use lowercase letters, numbers and '-'.</html>", IconType.WARNING);
             }else {
                 new InfoDialog("Something went wrong!", IconType.ERROR);
-
             }
-
         }
         if (service != null){
             new InfoDialog("Service Created!", IconType.SUCCESS);

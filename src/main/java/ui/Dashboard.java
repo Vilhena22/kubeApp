@@ -23,7 +23,6 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
-import service.DeploymentService;
 
 import javax.swing.*;
 
@@ -115,8 +114,6 @@ public class Dashboard  {
     private JComboBox comboServiceNamespace;
     private JButton deleteServiceButton;
     private JButton createServiceButton;
-    private JButton createButton;
-    private JButton deleteButton;
     private KubernetesClient client;
     private Assistant assistant = null;
     private Tools tools = null;
@@ -141,6 +138,10 @@ public class Dashboard  {
         //Deployment
         createDeploymentButton.addActionListener(this::btnCreateDeployment);
         deleteDeploymentButton.addActionListener(this::btnDeleteDeployment);
+
+        //Namespace
+        createNamespaceButton.addActionListener(this::btnCreateNamespace);
+        deleteNamespaceButton.addActionListener(this::btnDeleteNamespace);
 
         //Node
         addNodeButton.addActionListener(this::btnAddNode);
@@ -253,7 +254,7 @@ public class Dashboard  {
             hideContentPanels();
             namespacesPanel.setVisible(true);
 
-                fillNamespaceTable();
+                fillNamespaceTable("All");
         });
 
         searchBar.addKeyListener(new KeyAdapter() {
@@ -387,21 +388,6 @@ public class Dashboard  {
             }
         });
     }
-
-    private void btnCreateDeployment(ActionEvent actionEvent) {
-        CreateDeployment newDep = new CreateDeployment(client);
-        newDep.pack();
-        newDep.setSize(300, 250);
-        newDep.setLocationRelativeTo(null);
-        newDep.setResizable(false);
-        newDep.setVisible(true);
-        try {
-            fillDeploymentTable("All");
-        } catch (ApiException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 
     private void btnOpenChat(ActionEvent actionEvent) {
         if (assistant==null && tools == null){
@@ -678,6 +664,20 @@ public class Dashboard  {
 
     ////################Deployments#################
     ///
+    ///
+    private void btnCreateDeployment(ActionEvent actionEvent) {
+        CreateDeployment newDep = new CreateDeployment(client);
+        newDep.pack();
+        newDep.setSize(300, 250);
+        newDep.setLocationRelativeTo(null);
+        newDep.setResizable(false);
+        newDep.setVisible(true);
+        try {
+            fillDeploymentTable("All");
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private void btnDeleteDeployment(ActionEvent actionEvent) {
 
@@ -759,7 +759,7 @@ public class Dashboard  {
     ////################Namespaces#################
     ///
 
-    public void fillNamespaceTable(){
+    public void fillNamespaceTable(String namespace) {
 
         CardLayout cl = (CardLayout) namespacesLoading.getLayout();
         loadingNamespaces.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
@@ -777,17 +777,34 @@ public class Dashboard  {
                         return false;
                     }
                 };
-                try {
-                    for (V1Namespace nm : client.getNamespaceService().getAllNamespaces().getItems()) {
-                        Object[] row = {
+
+                V1Namespace nspace;
+                if (namespace.compareTo("All") == 0) {
+                    try {
+                        for (V1Namespace n1 : client.getNamespaceService().getAllNamespaces().getItems()){
+                            Object[] row = {
+                                    n1.getMetadata() != null ? n1.getMetadata().getName() : null,
+                                    n1.getStatus() != null ? n1.getStatus().getPhase() : null,
+                                    n1.getMetadata().getCreationTimestamp(),
+                            };
+                            model.addRow(row);
+                        }
+                    } catch (ApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    V1Namespace nm = null;
+                    try {
+                        nm = client.getNamespaceService().getNamespace(namespace);
+                    } catch (ApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                    Object[] row = {
                                 nm.getMetadata() != null ? nm.getMetadata().getName() : null,
                                 nm.getStatus() != null ? nm.getStatus().getPhase() : null,
                                 nm.getMetadata().getCreationTimestamp(),
                         };
-                        model.addRow(row);
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    model.addRow(row);
                 }
                 return model;
             }
@@ -807,9 +824,32 @@ public class Dashboard  {
                 }
             }
         };
-
         worker.execute();
+    }
 
+    private void btnDeleteNamespace(ActionEvent actionEvent) {
+
+        String namespace;
+        for (int row : tableNamespaces.getSelectedRows()) {
+            try {
+                //name = tableNamespaces.getValueAt(row,0).toString();
+                namespace = tableNamespaces.getValueAt(row, 0 ).toString();
+                client.getNamespaceService().deleteNamespace(namespace);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        fillNamespaceTable("All");
+    }
+
+    private void btnCreateNamespace(ActionEvent actionEvent) {
+        CreateNamespace newNs = new CreateNamespace(client);
+        newNs.pack();
+        newNs.setSize(300, 250);
+        newNs.setLocationRelativeTo(null);
+        newNs.setResizable(false);
+        newNs.setVisible(true);
+        fillNamespaceTable("All");
     }
 
 
@@ -1198,6 +1238,7 @@ public class Dashboard  {
                 addNodeButton,deleteNodeButton, //Nodes
                 createServiceButton,deleteServiceButton,//Services
                 createDeploymentButton,deleteDeploymentButton, //Deployment Buttons
+                createNamespaceButton, deleteNamespaceButton, //Namespace Buttons
                 addPodButton,deletePodButton, //Pods Buttons
                 buttonChatBot,
         };
