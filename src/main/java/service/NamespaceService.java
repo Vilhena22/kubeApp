@@ -10,8 +10,8 @@ public class NamespaceService extends V1Namespace {
 
     private final CoreV1Api nm = new CoreV1Api();
 
-    public void getNamespace(String namespace) throws ApiException {
-        nm.readNamespace(namespace).execute();
+    public V1Namespace getNamespace(String namespace) throws ApiException {
+        return nm.readNamespace(namespace).execute();
     }
 
     public V1NamespaceList getAllNamespaces() throws ApiException {
