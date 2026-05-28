@@ -31,9 +31,6 @@ public class Main {
             frame.setVisible(true);
 
 
-
-            new InfoDialog("<html>Invalid service name.<br>" +
-                    "Use lowercase letters, numbers and '-'.</html>", IconType.WARNING);
             /*KubernetesClient client = new KubernetesClient(
                     AppSetup.getK3sHost(),
                     AppSetup.getK3sToken()

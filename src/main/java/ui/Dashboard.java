@@ -445,7 +445,6 @@ public class Dashboard  {
         CardLayout cl = (CardLayout) servicesLoading.getLayout();
         loadingServices.setIcon(new ImageIcon(Objects.requireNonNull(getClass().getResource("/icons/loading.gif"))));
         cl.show(servicesLoading, "loading");
-        System.out.println(nameSpace);
         SwingWorker<DefaultTableModel, Void> worker = new SwingWorker<>() {
 
             @Override
@@ -459,7 +458,7 @@ public class Dashboard  {
                 };
                 try {
                     V1ServiceList serviceList;
-                    if (nameSpace.isEmpty()) {
+                    if (nameSpace.isEmpty()|| nameSpace.equals("All")) {
                         serviceList = client.getServiceManager().getAllServices();
                     } else {
                         serviceList = client.getServiceManager().getAllServicesOnNamespace(nameSpace);
@@ -629,7 +628,7 @@ public class Dashboard  {
                 };
 
                 V1PodList podList;
-                if (namespace.isEmpty()) {
+                if (namespace.isEmpty() || namespace.equals("All")) {
                     podList = client.getPodService().getAllPods();
                 } else {
                     podList = client.getPodService().getAllPodsOnNamespace(namespace);
@@ -1033,7 +1032,8 @@ public class Dashboard  {
 
     private void getCPUPercentage() throws Exception {
         double value = client.getClusterService().getCPUPercentage();
-        ClusterDAO.getInstance().saveHistory("CPU",setValueColor(value, valueCard1));
+        setValueColor(value, valueCard1);
+        //ClusterDAO.getInstance().saveHistory("CPU",setValueColor(value, valueCard1));
         Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/cpu.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard1.setIcon(new ImageIcon(logo));
         iconCard1.setText("Cluster CPU Usage");
