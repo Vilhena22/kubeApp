@@ -212,9 +212,7 @@ public class CreateService extends JDialog {
         if (service != null){
             new InfoDialog("Service Created!", IconType.SUCCESS);
             dispose();
-        }/*else {
-            new InfoDialog("Create Service Failed", IconType.ERROR);
-        }*/
+        }
 
     }
 
@@ -222,37 +220,5 @@ public class CreateService extends JDialog {
         // add your code here if necessary
         dispose();
     }
-
-
-  /*  Map<String, String> selector= new HashMap<>();
-        selector.put("app", "my-app");
-    new V1Service()
-                .apiVersion("v1")
-                .kind("Service")
-                .metadata(new V1ObjectMeta().name(serviceName))
-            .spec(new V1ServiceSpec()
-                        .type("ClusterIP")
-                        .selector(selector)
-                        .ports(Collections.singletonList(new V1ServicePort()
-                                .port(80)
-                                .targetPort(new IntOrString(8080))
-            .protocol("TCP"))))
-            );
-
-    V1ServicePort servicePort = new V1ServicePort()
-            .port(80)
-            .targetPort(new IntOrString(8080))
-            .nodePort(30080)
-            .protocol("TCP");
-
-    V1ServiceSpec spec = new V1ServiceSpec()
-            .type("NodePort")
-            .selector(selector)
-            .ports(Arrays.asList(servicePort));
-
-    V1ServiceSpec spec = new V1ServiceSpec()
-            .type("LoadBalancer")
-            .selector(selector)
-            .ports(Arrays.asList(servicePort));*/
 }
 

@@ -1,18 +1,15 @@
 package ai;
 
-import Handlers.AppSetup;
+
 import api.KubernetesClient;
 import dev.langchain4j.agent.tool.Tool;
-import io.kubernetes.client.custom.Quantity;
-import io.kubernetes.client.openapi.models.V1Node;
+import io.kubernetes.client.openapi.models.V1Pod;
+
 import io.kubernetes.client.openapi.models.V1PodList;
 import model.Result;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Tools {
-    private KubernetesClient client;
+    private final KubernetesClient client;
 
     public Tools(KubernetesClient client) {
         this.client = client;
@@ -38,10 +35,14 @@ public class Tools {
 
     }
 
-    @Tool("Get nodes status")
+    @Tool("""
+Get the status of a Kubernetes nodes.
+Use this tool when the user asks about nodes status in general.
+Example node names: tl2master, worker1, node-01.
+Input should only be the node name.
+""")
     public String getNodesStatus() {
         try {
-            List<Object[]> nodeNames = new ArrayList<>();
             int up =0;
             int down =0;
             for (Result result : client.getNodeService().getReadyNodes()) {
@@ -91,4 +92,61 @@ Input should only be the node name.
         }
     }
 
+
+    @Tool("""
+List all pods.
+Use this tool when the user asks for list all pods or when you need to check all existent pods
+and the status and other information.
+""")
+    public String listPods() {
+        try {
+
+            V1PodList podsList = client.getPodService().getAllPods();
+
+            return "This is a list of  all pods " + podsList.getItems();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Tool("""
+Get the status of a Kubernetes pods.
+Use this tool when the user asks about pods status.
+""")
+    public String getPodsStatus() {
+        try {
+            int up =0;
+            int down =0;
+            for (V1Pod pod : client.getPodService().getAllPods().getItems()) {
+                String status = pod.getStatus() != null ? pod.getStatus().getPhase() : null;
+                if (status != null && (status.equals("Failed") || status.equals("Unknown"))) {
+                    down++;
+                }else{
+                    up++;
+                }
+            }
+            return "At the moment are " + down + " pods down and " + up+ "up";
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    @Tool("""
+Restart pods that are down.
+Use this tool when the user asks for restart or fix the pods down.
+""")
+    public String restartPods() {
+        try {
+            for (V1Pod pod : client.getPodService().getAllPods().getItems()) {
+                String status = pod.getStatus() != null ? pod.getStatus().getPhase() : null;
+                if (status != null && (status.equals("Failed") || status.equals("Unknown"))) {
+                    client.getPodService().deletePod(pod.getMetadata() != null ? pod.getMetadata().getName() : null, pod.getMetadata().getNamespace());
+                }
+            }
+            return "All pods have been restarted.";
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
