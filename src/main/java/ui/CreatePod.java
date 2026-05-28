@@ -122,9 +122,14 @@ public class CreatePod extends JDialog {
                 dispose();
             }catch (ApiException e){
                 if (e.getCode() == 409) {
-
                     new InfoDialog("Error : Pod Already Exists!", IconType.ERROR);
 
+                }else{
+                    String error = e.getResponseBody();
+                    if (error.contains("metadata.name")) {
+                        new InfoDialog("<html>Invalid pod name.<br>" +
+                                "Use lowercase letters, numbers and '-'.</html>", IconType.WARNING);
+                    }
                 }
             }
 
