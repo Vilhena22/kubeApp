@@ -23,47 +23,7 @@ public class DeploymentService {
         return dep.readNamespacedDeployment(deploymentName,namespace).execute();
     }
 
-    // Criar deployment
-//    public V1Deployment createDeployment(String name, String appName, String containerName, String containerImage) throws ApiException {
-//
-//        V1Deployment newDeployment = new V1Deployment()
-//                .apiVersion("apps/v1")
-//                .kind("Deployment")
-//                .metadata(
-//                        new V1ObjectMeta()
-//                                .name(name)
-//                )
-//                .spec(
-//                        new V1DeploymentSpec()
-//                                .replicas(3)
-//                                .selector(
-//                                        new V1LabelSelector()
-//                                                .putMatchLabelsItem(appName)
-//                                )
-//                                .template(
-//                                        new V1PodTemplateSpec()
-//                                                .metadata(
-//                                                        new V1ObjectMeta()
-//                                                                .putLabelsItem("app", "nginx")
-//                                                )
-//                                                .spec(
-//                                                        new V1PodSpec()
-//                                                                .addContainersItem(
-//                                                                        new V1Container()
-//                                                                                .name("nginx")
-//                                                                                .image("nginx:latest")
-//                                                                )
-//                                                )
-//                                )
-//                );
-//
-//        return dep.createNamespacedDeployment(
-//                namespace,
-//                newDeployment
-//        ).execute();
-//    }
-
-    public V1Deployment createDeployment(String namespace, String deploymentName, String labelApp, String containerName, String image) throws ApiException {
+    public void createDeployment(String namespace, String deploymentName, String labelApp, String containerName, String image) throws ApiException {
 
         V1Deployment newDeployment = new V1Deployment()
                 .apiVersion("apps/v1")
@@ -95,7 +55,7 @@ public class DeploymentService {
                                 )
                 );
 
-        return dep.createNamespacedDeployment(namespace, newDeployment).execute();
+        dep.createNamespacedDeployment(namespace, newDeployment).execute();
     }
 
 

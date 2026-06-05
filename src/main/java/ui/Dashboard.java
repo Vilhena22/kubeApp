@@ -84,7 +84,6 @@ public class Dashboard  {
     private JComboBox comboBoxDeployment;
     private JButton createNamespaceButton;
     private JButton deleteNamespaceButton;
-    private JTable namespaceTable;
     private JTable tableDeployments;
     private JTable tableNodes;
     private JPanel searchPanel;
@@ -373,21 +372,18 @@ public class Dashboard  {
                 }
             }
         });
-        comboBoxDeployment.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                setComboBoxStyle(comboBoxDeployment);
-                if (e.getStateChange() != ItemEvent.SELECTED) return; // só reage ao SELECTED
+        comboBoxDeployment.addItemListener(e -> {
+            setComboBoxStyle(comboBoxDeployment);
+            if (e.getStateChange() != ItemEvent.SELECTED) return; // só reage ao SELECTED
 
-                try {
-                    if (comboBoxDeployment.getSelectedIndex() == -1) {
-                        fillDeploymentTable("");
-                    } else {
-                        fillDeploymentTable(comboBoxDeployment.getSelectedItem().toString());
-                    }
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
+            try {
+                if (comboBoxDeployment.getSelectedIndex() == -1) {
+                    fillDeploymentTable("");
+                } else {
+                    fillDeploymentTable(Objects.requireNonNull(comboBoxDeployment.getSelectedItem()).toString());
                 }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
             }
         });
     }
@@ -435,7 +431,7 @@ public class Dashboard  {
                 throw new RuntimeException(e);
             }
         }else {
-            new InfoDialog("Select atleast one service",IconType.WARNING);
+            new InfoDialog("Select at least one service",IconType.WARNING);
         }
     }
 
@@ -809,7 +805,6 @@ public class Dashboard  {
                     }
                 };
 
-                V1Namespace nspace;
                 if (namespace.compareTo("All") == 0) {
                     try {
                         for (V1Namespace n1 : client.getNamespaceService().getAllNamespaces().getItems()){
@@ -824,7 +819,7 @@ public class Dashboard  {
                         throw new RuntimeException(e);
                     }
                 } else {
-                    V1Namespace nm = null;
+                    V1Namespace nm;
                     try {
                         nm = client.getNamespaceService().getNamespace(namespace);
                     } catch (ApiException e) {

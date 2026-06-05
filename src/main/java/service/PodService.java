@@ -2,12 +2,12 @@ package service;
 
 import Handlers.HttpSendRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kubernetes.client.custom.Quantity;
+
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.*;
 
-import io.kubernetes.client.util.Yaml;
+
 import model.PrometheusResponse;
 import model.Result;
 

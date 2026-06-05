@@ -1,7 +1,6 @@
 package ui;
 
 import Handlers.FieldType;
-import Handlers.FieldValidator;
 import api.KubernetesClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Namespace;

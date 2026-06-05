@@ -3,24 +3,17 @@ package service;
 import Handlers.HttpSendRequest;
 import api.KubernetesClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Node;
 import io.kubernetes.client.openapi.models.V1NodeList;
 import model.PrometheusResponse;
 import model.Result;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.Objects;
 
 public class ClusterService {
     private final KubernetesClient client;
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
 
     public ClusterService(KubernetesClient client) {
@@ -30,7 +23,7 @@ public class ClusterService {
     public V1NodeList getAllMastersNodes() throws Exception {
         V1NodeList masters = new V1NodeList();
         for (V1Node node : client.getNodeService().getAllNodes().getItems()) {
-            Map<String, String> labels = node.getMetadata().getLabels();
+            Map<String, String> labels = Objects.requireNonNull(node.getMetadata()).getLabels();
 
             if (labels != null &&
                     (labels.containsKey("node-role.kubernetes.io/control-plane") ||

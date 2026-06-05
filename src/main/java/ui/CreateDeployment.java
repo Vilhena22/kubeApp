@@ -8,6 +8,7 @@ import model.IconType;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.util.Objects;
 
 public class CreateDeployment extends JDialog {
     private JPanel contentPane;
@@ -45,17 +46,9 @@ public class CreateDeployment extends JDialog {
 
 
 
-        buttonCreate.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onOK();
-            }
-        });
+        buttonCreate.addActionListener(e -> onOK());
 
-        buttonCancel.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onCancel();
-            }
-        });
+        buttonCancel.addActionListener(e -> onCancel());
 
         // call onCancel() when cross is clicked
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -66,11 +59,7 @@ public class CreateDeployment extends JDialog {
         });
 
         // call onCancel() on ESCAPE
-        contentPane.registerKeyboardAction(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onCancel();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        contentPane.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         setVisible(true);
     }
 
@@ -97,7 +86,7 @@ public class CreateDeployment extends JDialog {
             for (V1Namespace v1Namespace :
                     client.getNamespaceService().getAllNamespaces().getItems()) {
 
-                if (ns.equals(v1Namespace.getMetadata().getName())) {
+                if (ns.equals(Objects.requireNonNull(v1Namespace.getMetadata()).getName())) {
                     namespaceExists = true;
                     break;
                 }
