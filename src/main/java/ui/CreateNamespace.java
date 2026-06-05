@@ -1,5 +1,6 @@
 package ui;
 
+import Handlers.FieldType;
 import api.KubernetesClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Namespace;
@@ -22,13 +23,18 @@ public class CreateNamespace extends JDialog {
         setTitle("Create Namespace");
         setContentPane(contentPane);
         setModal(true);
+        setResizable(false);
         getRootPane().setDefaultButton(buttonOK);
+        pack();
+        setLocationRelativeTo(null);
+
 
         this.client = client;
 
         StyleFunctions.hoverButtonEffect(buttonOK);
         StyleFunctions.hoverButtonEffect(buttonCancel);
         StyleFunctions.setTextFieldStyle(newNamespace, true);
+        StyleFunctions.attachValidation(newNamespace, FieldType.NAME);
 
         buttonOK.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -56,6 +62,8 @@ public class CreateNamespace extends JDialog {
                 onCancel();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        setVisible(true);
     }
 
     private void onOK() {

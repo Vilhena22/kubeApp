@@ -1,5 +1,6 @@
 package ui;
 
+import Handlers.FieldType;
 import api.KubernetesClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Namespace;
@@ -23,6 +24,9 @@ public class CreateDeployment extends JDialog {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonCreate);
+        setResizable(false);
+        pack();
+        setLocationRelativeTo(null);
         this.client = client;
 
         StyleFunctions.hoverButtonEffect(buttonCreate);
@@ -32,6 +36,14 @@ public class CreateDeployment extends JDialog {
         StyleFunctions.setTextFieldStyle(containerImage, true);
         StyleFunctions.setTextFieldStyle(containerName, true);
         StyleFunctions.setTextFieldStyle(depName, true);
+
+        StyleFunctions.attachValidation(depName, FieldType.NAME);
+        StyleFunctions.attachValidation(namespace, FieldType.NAME);
+        StyleFunctions.attachValidation(labelApp, FieldType.NAME);
+        StyleFunctions.attachValidation(containerName, FieldType.CONTAINER);
+        StyleFunctions.attachValidation(containerImage, FieldType.IMAGE);
+
+
 
         buttonCreate.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -59,6 +71,7 @@ public class CreateDeployment extends JDialog {
                 onCancel();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        setVisible(true);
     }
 
     private void onOK() {

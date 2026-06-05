@@ -1,5 +1,7 @@
 package ui;
 
+import Handlers.FieldType;
+import Handlers.FieldValidator;
 import api.KubernetesClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Namespace;
@@ -75,6 +77,11 @@ public class CreatePod extends JDialog {
 
         // call onCancel() on ESCAPE
         contentPane.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        StyleFunctions.attachValidation(textFieldPodName,FieldType.NAME);
+        StyleFunctions.attachValidation(textFieldContainerName,FieldType.CONTAINER);
+        StyleFunctions.attachValidation(textFieldContainerImage,FieldType.IMAGE);
+
         setVisible(true);
     }
 
@@ -277,4 +284,6 @@ public class CreatePod extends JDialog {
             StyleFunctions.hoverButtonEffect(btn);
         }
     }
+
+
 }

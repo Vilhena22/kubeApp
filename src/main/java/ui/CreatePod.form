@@ -112,9 +112,9 @@
               <component id="52acf" class="javax.swing.JTextField" binding="textFieldPodName">
                 <constraints>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="220" height="32"/>
-                    <preferred-size width="220" height="32"/>
-                    <maximum-size width="220" height="32"/>
+                    <minimum-size width="230" height="32"/>
+                    <preferred-size width="230" height="32"/>
+                    <maximum-size width="230" height="32"/>
                   </grid>
                 </constraints>
                 <properties/>
@@ -122,9 +122,9 @@
               <component id="28c51" class="javax.swing.JTextField" binding="textFieldDescription">
                 <constraints>
                   <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="220" height="32"/>
-                    <preferred-size width="220" height="32"/>
-                    <maximum-size width="220" height="32"/>
+                    <minimum-size width="230" height="32"/>
+                    <preferred-size width="230" height="32"/>
+                    <maximum-size width="230" height="32"/>
                   </grid>
                 </constraints>
                 <properties/>
@@ -136,16 +136,16 @@
                 <properties>
                   <background color="-15525073"/>
                 </properties>
-                <border type="none"/>
+                <border type="empty"/>
                 <children>
                   <component id="760ad" class="javax.swing.JComboBox" binding="comboBoxNameSpace">
                     <constraints>
                       <card name="CardCombo"/>
                     </constraints>
                     <properties>
-                      <maximumSize width="220" height="32"/>
-                      <minimumSize width="220" height="32"/>
-                      <preferredSize width="220" height="32"/>
+                      <maximumSize width="230" height="32"/>
+                      <minimumSize width="230" height="32"/>
+                      <preferredSize width="230" height="32"/>
                     </properties>
                   </component>
                   <component id="756b6" class="javax.swing.JTextField" binding="textFieldAddNameSpace">
@@ -170,6 +170,7 @@
                 </constraints>
                 <properties>
                   <font name="JetBrains Mono Medium" size="16"/>
+                  <foreground color="-2171170"/>
                   <text value="Pod Name"/>
                 </properties>
               </component>
@@ -182,6 +183,7 @@
                 </constraints>
                 <properties>
                   <font name="JetBrains Mono Medium" size="16"/>
+                  <foreground color="-2171170"/>
                   <text value="Namespace"/>
                 </properties>
               </component>

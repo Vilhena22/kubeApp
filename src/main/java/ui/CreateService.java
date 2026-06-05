@@ -1,5 +1,6 @@
 package ui;
 
+import Handlers.FieldType;
 import api.KubernetesClient;
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.openapi.ApiException;
@@ -87,6 +88,15 @@ public class CreateService extends JDialog {
             StyleFunctions.setTextFieldStyle(textField,true);
         }
 
+        StyleFunctions.attachValidation(textFieldPortCluster, FieldType.PORT);
+        StyleFunctions.attachValidation(textFieldTargetCluster, FieldType.PORT);
+        StyleFunctions.attachValidation(textFieldNodePort, FieldType.PORT);
+        StyleFunctions.attachValidation(textFieldPortNode, FieldType.PORT);
+        StyleFunctions.attachValidation(textFieldTargetNode, FieldType.PORT);
+
+        StyleFunctions.attachValidation(textFieldServiceName, FieldType.NAME);
+        StyleFunctions.attachValidation(textFieldExternal, FieldType.NAME);
+
 
 
         buttonOK.addActionListener(e -> onOK());
@@ -169,14 +179,14 @@ public class CreateService extends JDialog {
         V1ServiceSpec spec=null;
         switch (comboBoxServiceType.getSelectedIndex()) {
             case 0, 2 -> servicePort = new V1ServicePort()
-                    .port(Integer.parseInt(textFieldPortCluster.getText()))
-                    .targetPort(new IntOrString(Integer.parseInt(textFieldTargetCluster.getText())))
+                    .port(Integer.valueOf(textFieldPortCluster.getText()))
+                    .targetPort(new IntOrString(textFieldTargetCluster.getText()))
                     .protocol("TCP");
-            case 1 ->  servicePort =new V1ServicePort()
-                    .port(Integer.parseInt(textFieldPortNode.getText()))
-                    .targetPort(new IntOrString(Integer.parseInt(textFieldTargetNode.getText())))
-                    .nodePort(Integer.parseInt(textFieldNodePort.getText()))
-                    .protocol("TCP");
+            case 1 -> servicePort =new V1ServicePort()
+                            .port(Integer.valueOf(textFieldPortNode.getText()))
+                            .targetPort(new IntOrString(textFieldTargetNode.getText()))
+                            .nodePort(Integer.parseInt(textFieldNodePort.getText()))
+                            .protocol("TCP");
             case 3 -> spec = new V1ServiceSpec()
                     .type(Objects.requireNonNull(comboBoxServiceType.getSelectedItem()).toString())
                     .externalName(textFieldExternal.getText());
@@ -220,5 +230,6 @@ public class CreateService extends JDialog {
         // add your code here if necessary
         dispose();
     }
+
 }
 

@@ -47,12 +47,9 @@ public class ClusterService {
         ObjectMapper mapper = new ObjectMapper();
         PrometheusResponse response = mapper.readValue(json, PrometheusResponse.class);
         Result result = response.data.getResult().getLast();
-        double value = Double.parseDouble(result.getValue().getLast().toString());
-
-        return value * 100;
+        return Double.parseDouble(result.getValue().getLast().toString());
 
     }
-
     public String getTotalRam() throws Exception {
         String json = HttpSendRequest.sendRequestGet("kube_node_status_capacity{resource='memory', node='tl2master'}");
         ObjectMapper mapper = new ObjectMapper();

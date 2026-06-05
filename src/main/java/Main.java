@@ -35,6 +35,8 @@ public class Main {
                     AppSetup.getK3sHost(),
                     AppSetup.getK3sToken()
             );*/
+
+            //new CreateNamespace(client);
             //client.getPodService().getAllPodsOnNamespace("").getItems().forEach(System.out::println);
 
             //client.getServiceManager().getAllServicesOnNamespace("").getItems().forEach(System.out::println);

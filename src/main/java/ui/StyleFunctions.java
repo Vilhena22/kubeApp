@@ -1,5 +1,9 @@
 package ui;
 
+import Handlers.FieldType;
+import Handlers.FieldValidator;
+import model.IconType;
+
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -20,6 +24,7 @@ public class StyleFunctions {
     private static final Color text = new Color(222,222,222);
     private static final Color border = new Color(30, 41, 60);
     private static final Color secondaryBG = new Color(19,27,47);
+    private static final Color invalidColor = new Color(117,0,4,65);
     private static final Font font = new Font("JetBrains Mono Medium", Font.BOLD, 16);
 
 
@@ -58,6 +63,9 @@ public class StyleFunctions {
 
     public  static void setTextFieldStyle(JTextComponent textField, boolean primaryColor){
         setTextAreaStyle(textField,primaryColor);
+        textField.setMaximumSize(new Dimension(230, 32));
+        textField.setMinimumSize(new Dimension(230, 32));
+        textField.setPreferredSize(new Dimension(230, 32));
 
         textField.setFont(new Font("JetBrains Mono Medium", Font.PLAIN, 16));
 
@@ -94,6 +102,10 @@ public class StyleFunctions {
         comboBox.setForeground(text);
         comboBox.setBorder(BorderFactory.createLineBorder(border));
         comboBox.setFocusable(false);
+        comboBox.setMaximumSize(new Dimension(230, 32));
+        comboBox.setMinimumSize(new Dimension(230, 32));
+        comboBox.setPreferredSize(new Dimension(230, 32));
+
 
         comboBox.setRenderer(new DefaultListCellRenderer() {
 
@@ -445,6 +457,69 @@ public class StyleFunctions {
         g2.drawString(text, textX, textY);
 
         g2.dispose();
+    }
+
+
+    public static void attachValidation(JTextField field, FieldType type) {
+        field.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                field.setBackground(bg);
+            }
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+
+                String text = field.getText().trim();
+                if (text.isEmpty()) {
+                    return;
+                }
+
+
+                switch (type) {
+
+                    case IMAGE -> {
+                        if (!FieldValidator.validateImage(text)) {
+                            field.setBackground(invalidColor);
+                            new InfoDialog(
+                                    "<html>Invalid image.<br>" +
+                                            "Use lowercase letters, numbers '-''.'_'.</html>",
+                                    IconType.WARNING
+                            );
+                        }
+                    }
+
+                    case NAME -> {
+                        if (!FieldValidator.validateName(text)) {
+                            field.setBackground(invalidColor);
+                            new InfoDialog(
+                                    "<html>Invalid name.<br>" +
+                                            "Use lowercase letters, numbers and '-'.</html>",
+                                    IconType.WARNING
+                            );
+                        }
+                    }
+
+                    case PORT -> {
+                        if (!FieldValidator.validatePort(text)) {
+                            field.setBackground(invalidColor);
+                            new InfoDialog(
+                                    "Invalid port number (0–65535)",
+                                    IconType.WARNING
+                            );
+                        }
+                    }
+
+                    case CONTAINER -> {
+                        if (!FieldValidator.validateContainerName(text)) {
+                            field.setBackground(invalidColor);
+                            new InfoDialog("<html>Invalid container.<br>" +
+                                    "Use lowercase letters, numbers and '-'.</html>",IconType.WARNING);
+                        }
+                    }
+
+                }
+            }
+        });
     }
 
 }

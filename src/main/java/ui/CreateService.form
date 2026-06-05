@@ -169,9 +169,9 @@
               <component id="74042" class="javax.swing.JTextField" binding="textFieldServiceName">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="2" indent="0" use-parent-layout="false">
-                    <minimum-size width="230" height="-1"/>
-                    <preferred-size width="230" height="-1"/>
-                    <maximum-size width="230" height="-1"/>
+                    <minimum-size width="230" height="32"/>
+                    <preferred-size width="230" height="32"/>
+                    <maximum-size width="230" height="32"/>
                   </grid>
                 </constraints>
                 <properties/>
@@ -211,9 +211,9 @@
               <component id="6731e" class="javax.swing.JTextField" binding="textFieldPortCluster">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="230" height="-1"/>
-                    <preferred-size width="230" height="-1"/>
-                    <maximum-size width="230" height="-1"/>
+                    <minimum-size width="230" height="32"/>
+                    <preferred-size width="230" height="32"/>
+                    <maximum-size width="230" height="32"/>
                   </grid>
                 </constraints>
                 <properties/>
@@ -221,9 +221,9 @@
               <component id="26cc7" class="javax.swing.JTextField" binding="textFieldTargetCluster">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="230" height="-1"/>
-                    <preferred-size width="230" height="-1"/>
-                    <maximum-size width="230" height="-1"/>
+                    <minimum-size width="230" height="32"/>
+                    <preferred-size width="230" height="32"/>
+                    <maximum-size width="230" height="32"/>
                   </grid>
                 </constraints>
                 <properties/>

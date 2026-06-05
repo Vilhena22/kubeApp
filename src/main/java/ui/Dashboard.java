@@ -114,6 +114,8 @@ public class Dashboard  {
     private JComboBox comboServiceNamespace;
     private JButton deleteServiceButton;
     private JButton createServiceButton;
+    private JProgressBar progressBarCPU;
+    private JProgressBar progressBarRam;
     private KubernetesClient client;
     private Assistant assistant = null;
     private Tools tools = null;
@@ -148,6 +150,7 @@ public class Dashboard  {
         deleteNodeButton.addActionListener(this::btnDeleteNode);
         buttonChatBot.addActionListener(this::btnOpenChat);
 
+        //Service
         createServiceButton.addActionListener(this::btnCreateService);
         deleteServiceButton.addActionListener(this::btnDeleteService);
 
@@ -412,18 +415,27 @@ public class Dashboard  {
     }
 
     private void btnDeleteService(ActionEvent actionEvent) {
-        for (int row : tableServices.getSelectedRows()){
+
+        if (tableServices.getSelectedRow()>0) {
+            DeleteDialog dialog = new DeleteDialog();
+            if (!dialog.isConfirmed()){
+                return;
+            }
+            for (int row : tableServices.getSelectedRows()){
+                try {
+                    client.getServiceManager().deleteService(tableServices.getValueAt(row,2).toString(),tableServices.getValueAt(row,0).toString());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            new InfoDialog("All Services Deleted!",IconType.SUCCESS);
             try {
-                client.getServiceManager().deleteService(tableServices.getValueAt(row,2).toString(),tableServices.getValueAt(row,0).toString());
+                fillServicesTable("");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }
-        new InfoDialog("All Nodes Deleted!",IconType.SUCCESS);
-        try {
-            fillServicesTable("");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        }else {
+            new InfoDialog("Select atleast one service",IconType.WARNING);
         }
     }
 
@@ -496,18 +508,26 @@ public class Dashboard  {
     }
 
     private void btnDeleteNode(ActionEvent actionEvent) {
-        for (int row : tableNodes.getSelectedRows()){
+        if (tableNodes.getSelectedRow()>0) {
+            DeleteDialog dialog = new DeleteDialog();
+            if (!dialog.isConfirmed()){
+                return;
+            }
+            for (int row : tableNodes.getSelectedRows()){
+                try {
+                    client.getNodeService().deleteNode(tableNodes.getValueAt(row,1).toString());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            new InfoDialog("All Nodes Deleted!",IconType.SUCCESS);
             try {
-                client.getNodeService().deleteNode(tableNodes.getValueAt(row,1).toString());
+                fillNodesTable();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }
-        new InfoDialog("All Nodes Deleted!",IconType.SUCCESS);
-        try {
-            fillNodesTable();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        }else {
+            new InfoDialog("Select at least one node",IconType.WARNING);
         }
     }
 
@@ -586,13 +606,22 @@ public class Dashboard  {
     }
 
     private void deletePod() throws Exception {
-        for ( int i :  tablePods.getSelectedRows()) {
-            String podName = tablePods.getValueAt(i, 0).toString();
-            String nameSpace = tablePods.getValueAt(i, 3).toString();
-            client.getPodService().deletePod(podName,nameSpace);
+        if (tablePods.getSelectedRow()>0) {
+            DeleteDialog dialog = new DeleteDialog();
+            if (!dialog.isConfirmed()){
+                return;
+            }
+
+            for ( int i :  tablePods.getSelectedRows()) {
+                String podName = tablePods.getValueAt(i, 0).toString();
+                String nameSpace = tablePods.getValueAt(i, 3).toString();
+                client.getPodService().deletePod(podName,nameSpace);
+            }
+            new InfoDialog("All Pods Deleted!",IconType.SUCCESS);
+            fillPodsTable("");
+        }else {
+            new InfoDialog("Select at least one pod",IconType.WARNING);
         }
-        new InfoDialog("All Pods Deleted!",IconType.SUCCESS);
-        fillPodsTable("");
     }
 
 
@@ -665,12 +694,7 @@ public class Dashboard  {
     ///
     ///
     private void btnCreateDeployment(ActionEvent actionEvent) {
-        CreateDeployment newDep = new CreateDeployment(client);
-        newDep.pack();
-        newDep.setSize(300, 250);
-        newDep.setLocationRelativeTo(null);
-        newDep.setResizable(false);
-        newDep.setVisible(true);
+        new CreateDeployment(client);
         try {
             fillDeploymentTable("All");
         } catch (ApiException e) {
@@ -680,22 +704,30 @@ public class Dashboard  {
 
     private void btnDeleteDeployment(ActionEvent actionEvent) {
 
-        String name ;
-        String namespace ;
+        if (tableDeployments.getSelectedRow()>0) {
+            DeleteDialog dialog = new DeleteDialog();
+            if (!dialog.isConfirmed()){
+                return;
+            }
+            String name ;
+            String namespace ;
 
-        for (int row : tableDeployments.getSelectedRows()) {
+            for (int row : tableDeployments.getSelectedRows()) {
+                try {
+                    name = tableDeployments.getValueAt(row,0).toString();
+                    namespace = tableDeployments.getValueAt(row, 1 ).toString();
+                    client.getDeploymentService().deleteDeployment(name, namespace);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
             try {
-                name = tableDeployments.getValueAt(row,0).toString();
-                namespace = tableDeployments.getValueAt(row, 1 ).toString();
-                client.getDeploymentService().deleteDeployment(name, namespace);
-            } catch (Exception e) {
+                fillDeploymentTable("All");
+            } catch (ApiException e) {
                 throw new RuntimeException(e);
             }
-        }
-        try {
-            fillDeploymentTable("All");
-        } catch (ApiException e) {
-            throw new RuntimeException(e);
+        }else {
+            new InfoDialog("Select at least one deployment",IconType.WARNING);
         }
     }
 
@@ -828,26 +860,29 @@ public class Dashboard  {
 
     private void btnDeleteNamespace(ActionEvent actionEvent) {
 
-        String namespace;
-        for (int row : tableNamespaces.getSelectedRows()) {
-            try {
-                //name = tableNamespaces.getValueAt(row,0).toString();
-                namespace = tableNamespaces.getValueAt(row, 0 ).toString();
-                client.getNamespaceService().deleteNamespace(namespace);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+        if (tableNamespaces.getSelectedRow()>0) {
+            DeleteDialog dialog = new DeleteDialog();
+            if (!dialog.isConfirmed()){
+                return;
             }
+            String namespace;
+            for (int row : tableNamespaces.getSelectedRows()) {
+                try {
+                    //name = tableNamespaces.getValueAt(row,0).toString();
+                    namespace = tableNamespaces.getValueAt(row, 0 ).toString();
+                    client.getNamespaceService().deleteNamespace(namespace);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            fillNamespaceTable("All");
+        }else {
+            new InfoDialog("Select a least one namespace",IconType.WARNING);
         }
-        fillNamespaceTable("All");
     }
 
     private void btnCreateNamespace(ActionEvent actionEvent) {
-        CreateNamespace newNs = new CreateNamespace(client);
-        newNs.pack();
-        newNs.setSize(300, 250);
-        newNs.setLocationRelativeTo(null);
-        newNs.setResizable(false);
-        newNs.setVisible(true);
+        new CreateNamespace(client);
         fillNamespaceTable("All");
     }
 
@@ -1072,24 +1107,33 @@ public class Dashboard  {
 
     private void getCPUPercentage() throws Exception {
         double value = client.getClusterService().getCPUPercentage();
-        setValueColor(value, valueCard1);
-        //ClusterDAO.getInstance().saveHistory("CPU",setValueColor(value, valueCard1));
+        ClusterDAO.getInstance().saveHistory("CPU",setValueColor(value, valueCard1,progressBarCPU));
         Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/cpu.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard1.setIcon(new ImageIcon(logo));
         iconCard1.setText("Cluster CPU Usage");
         iconCard1.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
-        valueCard1.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 48));
+        valueCard1.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 64));
+        progressBarCPU.setMaximum(100);
+        progressBarCPU.setMinimum(0);
+        progressBarCPU.setValue((int) value);
+
+
+
+
 
     }
 
     private void getRAMPercentage() throws Exception {
         double value = client.getClusterService().getRamPercentage();
-        ClusterDAO.getInstance().saveHistory("RAM",setValueColor(value, valueCard2));
+        ClusterDAO.getInstance().saveHistory("RAM",setValueColor(value, valueCard2,progressBarRam));
         Image logo = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("./icons/ram.png"))).getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
         iconCard2.setIcon(new ImageIcon(logo));
         iconCard2.setText("Cluster Memory Usage");
         iconCard2.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 16));
-        valueCard2.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 48));
+        valueCard2.setFont(new Font("JetBrains Mono Medium", Font.BOLD, 64));
+        progressBarRam.setMaximum(100);
+        progressBarRam.setMinimum(0);
+        progressBarRam.setValue((int) value);
 
     }
 
@@ -1163,11 +1207,16 @@ public class Dashboard  {
         }, 0, 5, TimeUnit.MINUTES);
     }
 
-    private String setValueColor(double value, JLabel valueCard1) {
+    private String setValueColor(double value, JLabel valueCard1, JProgressBar progressBar) {
         if (value > 75.00 && value < 85.00) {
             valueCard1.setForeground(Color.ORANGE);
+            progressBar.setForeground(Color.ORANGE);
         }else if (value > 85.00) {
             valueCard1.setForeground(Color.RED);
+            progressBar.setForeground(Color.RED);
+        }else{
+            valueCard1.setForeground(Color.decode("#387CF5"));
+            progressBar.setForeground(Color.decode("#387CF5"));
         }
         String stringValue = String.format("%02.2f", value );
         valueCard1.setText(stringValue+"%");
@@ -1332,7 +1381,7 @@ public class Dashboard  {
         // TITLE
         chart.getTitle().setPaint(textColor);
         chart.getTitle().setFont(
-                new Font("SansSerif", Font.BOLD, 18)
+                new Font("JetBrains Mono Medium", Font.BOLD, 18)
         );
 
         // PLOT
